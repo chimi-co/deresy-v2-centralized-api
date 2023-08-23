@@ -1,6 +1,37 @@
 module.exports = {
   DERESY_CONTRACT_ABI: [
     {
+      inputs: [
+        {
+          internalType: 'contract IEAS',
+          name: 'eas',
+          type: 'address',
+        },
+      ],
+      stateMutability: 'nonpayable',
+      type: 'constructor',
+    },
+    {
+      inputs: [],
+      name: 'AccessDenied',
+      type: 'error',
+    },
+    {
+      inputs: [],
+      name: 'InsufficientValue',
+      type: 'error',
+    },
+    {
+      inputs: [],
+      name: 'InvalidEAS',
+      type: 'error',
+    },
+    {
+      inputs: [],
+      name: 'NotPayable',
+      type: 'error',
+    },
+    {
       anonymous: false,
       inputs: [
         {
@@ -55,6 +86,77 @@ module.exports = {
     {
       inputs: [
         {
+          components: [
+            {
+              internalType: 'bytes32',
+              name: 'uid',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'bytes32',
+              name: 'schema',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'uint64',
+              name: 'time',
+              type: 'uint64',
+            },
+            {
+              internalType: 'uint64',
+              name: 'expirationTime',
+              type: 'uint64',
+            },
+            {
+              internalType: 'uint64',
+              name: 'revocationTime',
+              type: 'uint64',
+            },
+            {
+              internalType: 'bytes32',
+              name: 'refUID',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'address',
+              name: 'recipient',
+              type: 'address',
+            },
+            {
+              internalType: 'address',
+              name: 'attester',
+              type: 'address',
+            },
+            {
+              internalType: 'bool',
+              name: 'revocable',
+              type: 'bool',
+            },
+            {
+              internalType: 'bytes',
+              name: 'data',
+              type: 'bytes',
+            },
+          ],
+          internalType: 'struct Attestation',
+          name: 'attestation',
+          type: 'tuple',
+        },
+      ],
+      name: 'attest',
+      outputs: [
+        {
+          internalType: 'bool',
+          name: '',
+          type: 'bool',
+        },
+      ],
+      stateMutability: 'payable',
+      type: 'function',
+    },
+    {
+      inputs: [
+        {
           internalType: 'string',
           name: '_name',
           type: 'string',
@@ -91,9 +193,9 @@ module.exports = {
           type: 'address[]',
         },
         {
-          internalType: 'string[]',
-          name: 'targets',
-          type: 'string[]',
+          internalType: 'uint256[]',
+          name: 'hypercertTargetIDs',
+          type: 'uint256[]',
         },
         {
           internalType: 'string[]',
@@ -124,6 +226,11 @@ module.exports = {
     {
       inputs: [
         {
+          internalType: 'bytes32',
+          name: 'easSchemaID',
+          type: 'bytes32',
+        },
+        {
           internalType: 'string[]',
           name: 'questions',
           type: 'string[]',
@@ -134,7 +241,7 @@ module.exports = {
           type: 'string[][]',
         },
         {
-          internalType: 'enum DeresyRequests.QuestionType[]',
+          internalType: 'enum DeresyResolver.QuestionType[]',
           name: 'questionTypes',
           type: 'uint8[]',
         },
@@ -166,9 +273,9 @@ module.exports = {
           type: 'address[]',
         },
         {
-          internalType: 'string[]',
-          name: 'targets',
-          type: 'string[]',
+          internalType: 'uint256[]',
+          name: 'hypercertTargetIDs',
+          type: 'uint256[]',
         },
         {
           internalType: 'string[]',
@@ -193,17 +300,17 @@ module.exports = {
               type: 'address',
             },
             {
-              internalType: 'uint8',
-              name: 'targetIndex',
-              type: 'uint8',
+              internalType: 'uint256',
+              name: 'hypercertID',
+              type: 'uint256',
             },
             {
-              internalType: 'string[]',
-              name: 'answers',
-              type: 'string[]',
+              internalType: 'bytes32',
+              name: 'attestationID',
+              type: 'bytes32',
             },
           ],
-          internalType: 'struct DeresyRequests.Review[]',
+          internalType: 'struct DeresyResolver.Review[]',
           name: 'reviews',
           type: 'tuple[]',
         },
@@ -216,6 +323,40 @@ module.exports = {
           internalType: 'bool',
           name: 'isClosed',
           type: 'bool',
+        },
+      ],
+      stateMutability: 'view',
+      type: 'function',
+    },
+    {
+      inputs: [
+        {
+          internalType: 'string',
+          name: '_name',
+          type: 'string',
+        },
+      ],
+      name: 'getRequestReviewForm',
+      outputs: [
+        {
+          internalType: 'string[]',
+          name: '',
+          type: 'string[]',
+        },
+        {
+          internalType: 'enum DeresyResolver.QuestionType[]',
+          name: '',
+          type: 'uint8[]',
+        },
+        {
+          internalType: 'string[][]',
+          name: 'choices',
+          type: 'string[][]',
+        },
+        {
+          internalType: 'bytes32',
+          name: '',
+          type: 'bytes32',
         },
       ],
       stateMutability: 'view',
@@ -237,7 +378,7 @@ module.exports = {
           type: 'string[]',
         },
         {
-          internalType: 'enum DeresyRequests.QuestionType[]',
+          internalType: 'enum DeresyResolver.QuestionType[]',
           name: '',
           type: 'uint8[]',
         },
@@ -245,6 +386,11 @@ module.exports = {
           internalType: 'string[][]',
           name: 'choices',
           type: 'string[][]',
+        },
+        {
+          internalType: 'bytes32',
+          name: '',
+          type: 'bytes32',
         },
       ],
       stateMutability: 'view',
@@ -265,6 +411,171 @@ module.exports = {
     },
     {
       inputs: [],
+      name: 'isPayable',
+      outputs: [
+        {
+          internalType: 'bool',
+          name: '',
+          type: 'bool',
+        },
+      ],
+      stateMutability: 'pure',
+      type: 'function',
+    },
+    {
+      inputs: [
+        {
+          components: [
+            {
+              internalType: 'bytes32',
+              name: 'uid',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'bytes32',
+              name: 'schema',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'uint64',
+              name: 'time',
+              type: 'uint64',
+            },
+            {
+              internalType: 'uint64',
+              name: 'expirationTime',
+              type: 'uint64',
+            },
+            {
+              internalType: 'uint64',
+              name: 'revocationTime',
+              type: 'uint64',
+            },
+            {
+              internalType: 'bytes32',
+              name: 'refUID',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'address',
+              name: 'recipient',
+              type: 'address',
+            },
+            {
+              internalType: 'address',
+              name: 'attester',
+              type: 'address',
+            },
+            {
+              internalType: 'bool',
+              name: 'revocable',
+              type: 'bool',
+            },
+            {
+              internalType: 'bytes',
+              name: 'data',
+              type: 'bytes',
+            },
+          ],
+          internalType: 'struct Attestation[]',
+          name: 'attestations',
+          type: 'tuple[]',
+        },
+        {
+          internalType: 'uint256[]',
+          name: 'values',
+          type: 'uint256[]',
+        },
+      ],
+      name: 'multiAttest',
+      outputs: [
+        {
+          internalType: 'bool',
+          name: '',
+          type: 'bool',
+        },
+      ],
+      stateMutability: 'payable',
+      type: 'function',
+    },
+    {
+      inputs: [
+        {
+          components: [
+            {
+              internalType: 'bytes32',
+              name: 'uid',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'bytes32',
+              name: 'schema',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'uint64',
+              name: 'time',
+              type: 'uint64',
+            },
+            {
+              internalType: 'uint64',
+              name: 'expirationTime',
+              type: 'uint64',
+            },
+            {
+              internalType: 'uint64',
+              name: 'revocationTime',
+              type: 'uint64',
+            },
+            {
+              internalType: 'bytes32',
+              name: 'refUID',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'address',
+              name: 'recipient',
+              type: 'address',
+            },
+            {
+              internalType: 'address',
+              name: 'attester',
+              type: 'address',
+            },
+            {
+              internalType: 'bool',
+              name: 'revocable',
+              type: 'bool',
+            },
+            {
+              internalType: 'bytes',
+              name: 'data',
+              type: 'bytes',
+            },
+          ],
+          internalType: 'struct Attestation[]',
+          name: 'attestations',
+          type: 'tuple[]',
+        },
+        {
+          internalType: 'uint256[]',
+          name: 'values',
+          type: 'uint256[]',
+        },
+      ],
+      name: 'multiRevoke',
+      outputs: [
+        {
+          internalType: 'bool',
+          name: '',
+          type: 'bool',
+        },
+      ],
+      stateMutability: 'payable',
+      type: 'function',
+    },
+    {
+      inputs: [],
       name: 'reviewFormsTotal',
       outputs: [
         {
@@ -279,25 +590,90 @@ module.exports = {
     {
       inputs: [
         {
-          internalType: 'string',
-          name: '_name',
-          type: 'string',
-        },
-        {
-          internalType: 'uint8',
-          name: 'targetIndex',
-          type: 'uint8',
-        },
-        {
-          internalType: 'string[]',
-          name: 'answers',
-          type: 'string[]',
+          components: [
+            {
+              internalType: 'bytes32',
+              name: 'uid',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'bytes32',
+              name: 'schema',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'uint64',
+              name: 'time',
+              type: 'uint64',
+            },
+            {
+              internalType: 'uint64',
+              name: 'expirationTime',
+              type: 'uint64',
+            },
+            {
+              internalType: 'uint64',
+              name: 'revocationTime',
+              type: 'uint64',
+            },
+            {
+              internalType: 'bytes32',
+              name: 'refUID',
+              type: 'bytes32',
+            },
+            {
+              internalType: 'address',
+              name: 'recipient',
+              type: 'address',
+            },
+            {
+              internalType: 'address',
+              name: 'attester',
+              type: 'address',
+            },
+            {
+              internalType: 'bool',
+              name: 'revocable',
+              type: 'bool',
+            },
+            {
+              internalType: 'bytes',
+              name: 'data',
+              type: 'bytes',
+            },
+          ],
+          internalType: 'struct Attestation',
+          name: 'attestation',
+          type: 'tuple',
         },
       ],
-      name: 'submitReview',
-      outputs: [],
-      stateMutability: 'nonpayable',
+      name: 'revoke',
+      outputs: [
+        {
+          internalType: 'bool',
+          name: '',
+          type: 'bool',
+        },
+      ],
+      stateMutability: 'payable',
       type: 'function',
+    },
+    {
+      inputs: [],
+      name: 'version',
+      outputs: [
+        {
+          internalType: 'string',
+          name: '',
+          type: 'string',
+        },
+      ],
+      stateMutability: 'view',
+      type: 'function',
+    },
+    {
+      stateMutability: 'payable',
+      type: 'receive',
     },
   ],
 }
