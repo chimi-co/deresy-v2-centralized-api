@@ -53,3 +53,25 @@ GOOGLE_APPLICATION_CREDENTIALS="path_to_your_private_key"
 ```
 yarn grants:add 
 ```
+
+### Get/Set environment variables
+
+Options: `dev, staging, prod`
+
+- Getting environment variables from the given environment.
+
+```
+./scripts/env-vars-get.sh <env option>
+
+# Example:
+./scripts/env-vars-get.sh dev
+```
+
+- Setting environment variables for a specific environment.
+
+```
+./scripts/env-vars-set.sh <env option>
+
+# Example:
+./scripts/env-vars-set.sh dev
+```
