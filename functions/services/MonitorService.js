@@ -3,6 +3,7 @@ const { groupBy } = require('lodash')
 
 const { db } = require('../firebase')
 const web3 = require('../web3')
+const provider = require('../ethers')
 
 const {
   getGrantByTarget,
@@ -16,9 +17,11 @@ const {
 
 const { MINTED_BLOCK_COLLECTION } = require('../constants/collections')
 const { DERESY_CONTRACT_ABI } = require('../constants/contractConstants')
+const { EAS, SchemaEncoder } = require('@ethereum-attestation-service/eas-sdk')
 
 const mintedBlockRef = db.collection(MINTED_BLOCK_COLLECTION)
 const CONTRACT_ADDRESS = functions.config().settings.contract_address
+const EAS_CONTRACT_ADDRESS = functions.config().settings.eas_contract_address
 
 const BLOCK_LIMIT = 100000
 
@@ -38,6 +41,7 @@ const getGrantScore = reviewsByGrant => {
   return res / scores.length
 }
 
+// eslint-disable-next-line  no-unused-vars
 const updateGrantsScore = async requestName => {
   const { reviews } = await getReviews(requestName)
 
@@ -61,6 +65,7 @@ const writeFormToDB = async (formID, tx, reviewForm) => {
     return { choices: choices }
   })
   const data = {
+    easSchemaID: reviewForm[3],
     formID: parseInt(formID),
     questions: reviewForm[0],
     types: reviewForm[1],
@@ -72,14 +77,14 @@ const writeFormToDB = async (formID, tx, reviewForm) => {
 
 const writeRequestToDB = async (requestName, reviewRequest, tx) => {
   const data = {
+    formIpfsHash: reviewRequest.formIpfsHash,
+    hypercertTargetIDs: reviewRequest.hypercertTargetIDs,
+    isClosed: reviewRequest.isClosed,
     requestName: requestName,
     reviewers: reviewRequest.reviewers,
-    targets: reviewRequest.targets,
-    targetsIPFSHashes: reviewRequest.targetsIPFSHashes,
-    formIpfsHash: reviewRequest.formIpfsHash,
     reviewFormIndex: reviewRequest.reviewFormIndex,
     rewardPerReview: reviewRequest.rewardPerReview,
-    isClosed: reviewRequest.isClosed,
+    targetsIPFSHashes: reviewRequest.targetsIPFSHashes,
     tx: tx,
   }
 
@@ -89,15 +94,26 @@ const writeRequestToDB = async (requestName, reviewRequest, tx) => {
 const writeReviewsToDB = async (requestName, reviews) => {
   const reviewsArray = []
 
-  reviews.forEach(review => {
-    const reviewObj = {
-      reviewer: review.reviewer,
-      targetIndex: review.targetIndex,
-      answers: review.answers,
+  const schemaEncoder = new SchemaEncoder(
+    'string requestName, uint256 hypercertID, string[] answers',
+  )
+  const eas = new EAS(EAS_CONTRACT_ADDRESS)
+  eas.connect(provider)
+
+  for (const review of reviews) {
+    const { reviewer, hypercertID, attestationID } = review
+    const data = {
+      reviewer,
+      hypercertID,
+      attestationID,
     }
 
-    reviewsArray.push(reviewObj)
-  })
+    const attestation = await eas.getAttestation(attestationID)
+
+    const decodedData = schemaEncoder.decodeData(attestation.data)
+    const answers = decodedData[2].value.value
+    reviewsArray.push({ ...data, answers })
+  }
 
   const data = {
     requestName: requestName,
@@ -105,7 +121,7 @@ const writeReviewsToDB = async (requestName, reviews) => {
   }
 
   await saveReviews(requestName, data)
-  await updateGrantsScore(requestName)
+  // TODO: add updateGrantsScore(requestName) function in this part when reviews monitor is working
 }
 
 const processForms = async startFormBlock => {
