@@ -4,6 +4,8 @@
     "eas_contract_address": "0x4200000000000000000000000000000000000021",
     "infura_provider": "https://optimism-goerli.infura.io/v3",
     "infura_api_key": "93cf3e10ca0044cdad4ac63eecdc04fc",
-    "network": "optimism-goerli"
+    "network": "optimism-goerli",
+    "pinataApiKey": "77ac5d0883800e7c13c1",
+    "pinataSecretApiKey": "670002d068f286b73da1d09e1331d42fee6e17c97423949fb77c5b59cbbc6b55"
   }
 }
