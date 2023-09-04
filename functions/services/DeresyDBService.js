@@ -94,7 +94,21 @@ const getReviews = async requestName => {
   return snapshot.docs[0].data()
 }
 
+const getGrantByHypercertId = async hypercertID => {
+  const snapshot = await grantsRef
+    .where('hypercertID', '==', parseInt(hypercertID))
+    .limit(1)
+    .get()
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  return snapshot.docs[0].data();
+}
+
 module.exports = {
+  getGrantByHypercertId,
   getGrantByTarget,
   getReviews,
   getReviewRequest,
