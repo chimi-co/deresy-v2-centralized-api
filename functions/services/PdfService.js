@@ -33,14 +33,6 @@ const pdfGenerator = async review => {
     })
   doc.moveDown().fillColor('black')
 
-  doc.fontSize(12).text('Attestation ID:', { continued: true })
-  doc
-    .fontSize(12)
-    .fillColor('blue')
-    .text(attestationID, {
-      link: `https://optimism-goerli-bedrock.easscan.org/attestation/view/${attestationID}`,
-    })
-  doc.moveDown().fillColor('black')
   doc.moveDown()
   doc.fontSize(14).text('Questions')
   doc.moveDown()
