@@ -112,7 +112,7 @@ const writeReviewsToDB = async (requestName, reviews) => {
 
     const decodedData = schemaEncoder.decodeData(attestation.data)
     const answers = decodedData[2].value.value
-    const pdfIpfsHash = decodedData[3].value.value
+    const pdfIpfsHash = decodedData[3]?.value?.value
 
     reviewsArray.push({ ...data, pdfIpfsHash, answers })
   }
