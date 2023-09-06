@@ -101,10 +101,10 @@ const getGrantByHypercertId = async hypercertID => {
     .get()
 
   if (snapshot.empty) {
-    return null;
+    return null
   }
 
-  return snapshot.docs[0].data();
+  return snapshot.docs[0].data()
 }
 
 module.exports = {

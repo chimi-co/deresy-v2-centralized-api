@@ -3,15 +3,8 @@ const PdfKit = require('pdfkit')
 const pdfGenerator = async review => {
   const doc = new PdfKit()
 
-  const {
-    attestationID,
-    easSchemaID,
-    hypercertID,
-    name,
-    summary,
-    reviewer,
-    questions,
-  } = review
+  const { easSchemaID, hypercertID, name, summary, reviewer, questions } =
+    review
 
   doc.fontSize(20).text(name)
   doc.moveDown()
