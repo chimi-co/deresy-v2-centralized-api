@@ -14,7 +14,6 @@ const PINATA_METADATA_NAME = 'Review';
 const prepareReviewForm = ({ easSchemaID, questions, questionOptions }) => ({
   choices: questionOptions,
   easSchemaID,
-  formID: 1,
   questions,
 });
 
