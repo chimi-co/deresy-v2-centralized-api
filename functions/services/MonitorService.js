@@ -95,7 +95,7 @@ const writeReviewsToDB = async (requestName, reviews) => {
   const reviewsArray = []
 
   const schemaEncoder = new SchemaEncoder(
-    'string requestName, uint256 hypercertID, string[] answers',
+    'string requestName, uint256 hypercertID, string[] answers, string pdfIpfsHash',
   )
   const eas = new EAS(EAS_CONTRACT_ADDRESS)
   eas.connect(provider)
