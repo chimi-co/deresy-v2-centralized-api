@@ -1,6 +1,7 @@
 const formatReviews = (reviewForm, review = {}) => {
-  const { choices, easSchemaID, questions } = reviewForm;
-  const { answers, attestationID, hypercertID, reviewer, name, summary } = review;
+  const { choices, easSchemaID, questions } = reviewForm
+  const { answers, attestationID, hypercertID, reviewer, name, summary } =
+    review
 
   const values = questions.map((question, index) => {
     return {

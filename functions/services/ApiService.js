@@ -21,16 +21,16 @@ app.get('/health_check', (request, response) => {
 app.post('/generate_pdf', (request, response) => {
   return cors(request, response, async () => {
     try {
-      const payload = JSON.parse(request.body);
+      const payload = JSON.parse(request.body)
 
-      const pinataPayload = await uploadPdf(payload);
+      const pinataPayload = await uploadPdf(payload)
 
-      response.send(pinataPayload);
+      response.send(pinataPayload)
     } catch (error) {
-      logger.error('[ !!! ] Error: ', error);
-      throw new https.HttpsError(error.code, error.message);
+      logger.error('[ !!! ] Error: ', error)
+      throw new https.HttpsError(error.code, error.message)
     }
-  });
+  })
 })
 
 const api = functions.https.onRequest(app)
