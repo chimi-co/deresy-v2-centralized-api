@@ -25,8 +25,6 @@ app.post('/generate_pdf', (request, response) => {
 
       const pinataPayload = await uploadPdf(payload)
 
-      console.log(pinataPayload)
-
       response.send(pinataPayload)
     } catch (error) {
       logger.error('[ !!! ] Error: ', error)
