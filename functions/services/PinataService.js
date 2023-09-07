@@ -1,6 +1,5 @@
 const { getGrantByHypercertId } = require('./DeresyDBService')
 
-const getStream = require('get-stream')
 const { Readable } = require('stream')
 
 const pinata = require('../pinata')
@@ -37,10 +36,9 @@ const uploadPdf = async (pdfData = {}) => {
 
   const formattedReview = formatReviews(reviewForm, { ...review, summary })
   const pdf = await pdfGenerator(formattedReview)
-  const pdfBuffer = await getStream.buffer(pdf)
+  const stream = Readable.from(pdf)
 
-  const stream = new Readable()
-  stream.push(pdfBuffer)
+  stream.push(pdf)
   stream.push(null)
 
   return await pinata.pinFileToIPFS(stream, pinataOptions)
