@@ -14,7 +14,8 @@
     "deploy:rules:staging": "firebase deploy --only firestore:rules -P staging",
     "deploy:rules:prod": "firebase deploy --only firestore:rules -P production",
     "logs": "firebase functions:log",
-    "grants:add": "node -e \"require('./scripts/GrantsPopulator').addGrants()\""
+    "grants:add": "node -e \"require('./scripts/GrantsPopulator').addGrants()\"",
+    "gcp-build": "node node_modules/puppeteer/install.js"
   },
   "engines": {
     "node": "18"

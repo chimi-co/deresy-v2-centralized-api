@@ -7,7 +7,22 @@ const pdfGenerator = async review => {
     headless: true,
   })
   const page = await browser.newPage()
-  const htmlContent = await reviewToHtml(review)
+  const htmlContent = reviewToHtml(review)
+
+  await page.setContent(htmlContent)
+  const pdfBuffer = await page.pdf({ format: 'A4' })
+
+  await browser.close()
+  return pdfBuffer
+}
+
+const testPdfGenerator = async review => {
+  const browser = await puppeteer.launch({
+    args: minimal_args,
+    headless: true,
+  })
+  const page = await browser.newPage()
+  const htmlContent = "<p>HI!</p><p>Just testing</p>"
 
   await page.setContent(htmlContent)
   const pdfBuffer = await page.pdf({ format: 'A4' })
@@ -55,5 +70,6 @@ const minimal_args = [
 ]
 
 module.exports = {
+  testPdfGenerator,
   pdfGenerator,
 }
