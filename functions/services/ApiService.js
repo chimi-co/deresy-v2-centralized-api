@@ -35,8 +35,6 @@ app.post('/generate_pdf', (request, response) => {
   })
 })
 
-const api = functions.https.onRequest(app)
-
-module.exports = {
-  api,
-}
+exports.api = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 540 })
+  .https.onRequest(app)
