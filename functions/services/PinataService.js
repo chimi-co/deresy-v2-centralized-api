@@ -6,8 +6,6 @@ const pinata = require('../pinata')
 const { pdfGenerator } = require('./PdfService')
 const { formatReviews } = require('../utils')
 
-const PINATA_METADATA_NAME = 'Review'
-
 const prepareReviewForm = ({ easSchemaID, questions, questionOptions }) => ({
   choices: questionOptions,
   easSchemaID,
@@ -21,14 +19,14 @@ const prepareReview = ({ name, answers, hypercertID, accountID }) => ({
   reviewer: accountID,
 })
 
-const getPinataOptions = name => ({
+const getPinataOptions = ({ hypercertID, accountID }) => ({
   pinataMetadata: {
-    name,
+    name: `review-${hypercertID}-${accountID}`,
   },
 })
 
 const uploadPdf = async (pdfData = {}) => {
-  const pinataOptions = getPinataOptions(PINATA_METADATA_NAME)
+  const pinataOptions = getPinataOptions(pdfData)
   const reviewForm = prepareReviewForm(pdfData)
   const review = prepareReview(pdfData)
   const grantDetails = await getGrantByHypercertId(pdfData.hypercertID)
