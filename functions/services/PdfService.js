@@ -1,43 +1,58 @@
-const PdfKit = require('pdfkit')
+const puppeteer = require('puppeteer')
+const { reviewToHtml } = require('../utils')
 
 const pdfGenerator = async review => {
-  const doc = new PdfKit()
-
-  const { easSchemaID, hypercertID, name, summary, reviewer, questions } =
-    review
-
-  doc.fontSize(20).text(name)
-  doc.moveDown()
-  doc.fontSize(14).text('Summary')
-  doc.moveDown()
-  doc.fontSize(12).text(summary)
-  doc.moveDown()
-  doc.fontSize(12).text(`Reviewer: ${reviewer}`)
-  doc.moveDown()
-  doc.fontSize(12).text(`Hypercert ID: ${hypercertID}`)
-  doc.moveDown()
-
-  doc.fontSize(12).text('EAS Schema ID:', { continued: true })
-  doc
-    .fontSize(12)
-    .fillColor('blue')
-    .text(easSchemaID, {
-      link: `https://optimism-goerli-bedrock.easscan.org/schema/view/${easSchemaID}`,
-    })
-  doc.moveDown().fillColor('black')
-
-  doc.moveDown()
-  doc.fontSize(14).text('Questions')
-  doc.moveDown()
-  questions.forEach(({ answer, question }, index) => {
-    doc.fontSize(12).text(`${index + 1}. ${question}`)
-    doc.moveDown()
-    doc.fontSize(12).text(`    ${answer}`)
-    doc.moveDown()
+  const browser = await puppeteer.launch({
+    args: minimal_args,
+    headless: true,
   })
-  doc.end()
-  return doc
+  const page = await browser.newPage()
+  const htmlContent = reviewToHtml(review)
+
+  await page.setContent(htmlContent)
+  const pdfBuffer = await page.pdf({ format: 'A4' })
+
+  await browser.close()
+  return pdfBuffer
 }
+
+const minimal_args = [
+  '--autoplay-policy=user-gesture-required',
+  '--disable-background-networking',
+  '--disable-background-timer-throttling',
+  '--disable-backgrounding-occluded-windows',
+  '--disable-breakpad',
+  '--disable-client-side-phishing-detection',
+  '--disable-component-update',
+  '--disable-default-apps',
+  '--disable-dev-shm-usage',
+  '--disable-domain-reliability',
+  '--disable-extensions',
+  '--disable-features=AudioServiceOutOfProcess',
+  '--disable-hang-monitor',
+  '--disable-ipc-flooding-protection',
+  '--disable-notifications',
+  '--disable-offer-store-unmasked-wallet-cards',
+  '--disable-popup-blocking',
+  '--disable-print-preview',
+  '--disable-prompt-on-repost',
+  '--disable-renderer-backgrounding',
+  '--disable-setuid-sandbox',
+  '--disable-speech-api',
+  '--disable-sync',
+  '--hide-scrollbars',
+  '--ignore-gpu-blacklist',
+  '--metrics-recording-only',
+  '--mute-audio',
+  '--no-default-browser-check',
+  '--no-first-run',
+  '--no-pings',
+  '--no-sandbox',
+  '--no-zygote',
+  '--password-store=basic',
+  '--use-gl=swiftshader',
+  '--use-mock-keychain',
+]
 
 module.exports = {
   pdfGenerator,
