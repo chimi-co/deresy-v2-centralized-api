@@ -94,9 +94,9 @@ const getReviews = async requestName => {
   return snapshot.docs[0].data()
 }
 
-const getGrantByHypercertId = async hypercertID => {
+const getGrantById = async grantID => {
   const snapshot = await grantsRef
-    .where('hypercertID', '==', parseInt(hypercertID))
+    .where('id', '==', parseInt(grantID))
     .limit(1)
     .get()
 
@@ -108,7 +108,7 @@ const getGrantByHypercertId = async hypercertID => {
 }
 
 module.exports = {
-  getGrantByHypercertId,
+  getGrantById,
   getGrantByTarget,
   getReviews,
   getReviewRequest,

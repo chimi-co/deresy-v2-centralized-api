@@ -1,4 +1,4 @@
-const { getGrantByHypercertId } = require('./DeresyDBService')
+const { getGrantById } = require('./DeresyDBService')
 
 const { Readable } = require('stream')
 
@@ -29,7 +29,7 @@ const uploadPdf = async (pdfData = {}) => {
   const pinataOptions = getPinataOptions(pdfData)
   const reviewForm = prepareReviewForm(pdfData)
   const review = prepareReview(pdfData)
-  const grantDetails = await getGrantByHypercertId(pdfData.hypercertID)
+  const grantDetails = await getGrantById(pdfData.grantID)
   const summary = grantDetails ? grantDetails.summary : ''
 
   const formattedReview = formatReviews(reviewForm, { ...review, summary })
