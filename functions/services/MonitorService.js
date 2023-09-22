@@ -78,13 +78,13 @@ const writeFormToDB = async (formID, tx, reviewForm) => {
 const writeRequestToDB = async (requestName, reviewRequest, tx) => {
   const data = {
     formIpfsHash: reviewRequest.formIpfsHash,
-    hypercertTargetIDs: reviewRequest.hypercertTargetIDs,
+    hypercertTargetIDs: reviewRequest.hypercertIDs,
     isClosed: reviewRequest.isClosed,
     requestName: requestName,
     reviewers: reviewRequest.reviewers,
     reviewFormIndex: reviewRequest.reviewFormIndex,
     rewardPerReview: reviewRequest.rewardPerReview,
-    targetsIPFSHashes: reviewRequest.targetsIPFSHashes,
+    targetsIPFSHashes: reviewRequest.hypercertIPFSHashes,
     tx: tx,
   }
 
