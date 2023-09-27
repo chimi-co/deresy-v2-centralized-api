@@ -2,3 +2,5 @@ node_modules/
 *.log
 .env.development.json
 .env.production.json
+serviceAccount.json
+.cache
