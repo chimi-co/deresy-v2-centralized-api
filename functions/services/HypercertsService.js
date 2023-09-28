@@ -196,6 +196,9 @@ const searchHypercerts = async searchInput => {
       const searchResults = hypercerts.filter(h => {
         return h.name.toLowerCase().includes(searchInput.toLowerCase())
       })
+
+      searchResults.sort((a, b) => a.name.localeCompare(b.name))
+
       return searchResults
     }
   } catch (e) {
