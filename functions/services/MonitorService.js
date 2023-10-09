@@ -84,6 +84,7 @@ const writeRequestToDB = async (requestName, reviewRequest, tx) => {
     reviewers: reviewRequest.reviewers,
     reviewFormIndex: reviewRequest.reviewFormIndex,
     rewardPerReview: reviewRequest.rewardPerReview,
+    paymentTokenAddress: reviewRequest.paymentTokenAddress,
     targetsIPFSHashes: reviewRequest.hypercertIPFSHashes,
     tx: tx,
   }
