@@ -113,7 +113,18 @@ const formatReviews = (reviewForm, review = {}) => {
   }
 }
 
+const getSixMonthsAgoTimestamp = () => {
+  const now = new Date()
+
+  now.setMonth(now.getMonth() - 6)
+
+  const sixMonthsAgoTimestamp = Math.floor(now.getTime() / 1000)
+
+  return sixMonthsAgoTimestamp
+}
+
 module.exports = {
   formatReviews,
   reviewToHtml,
+  getSixMonthsAgoTimestamp,
 }

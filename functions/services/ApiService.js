@@ -49,8 +49,11 @@ app.get('/get_hypercerts', (request, response) => {
 app.get('/search_hypercerts', (request, response) => {
   return cors(request, response, async () => {
     try {
-      const { searchInput } = request.query
-      const hypercertResults = await searchHypercerts(searchInput)
+      const { searchInput, lastSixMonths } = request.query
+      const hypercertResults = await searchHypercerts(
+        searchInput,
+        lastSixMonths,
+      )
       response.send(hypercertResults)
     } catch (error) {
       logger.error('[ !!! ] Error: ', error)

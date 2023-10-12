@@ -3,6 +3,7 @@ const fetch = require('node-fetch')
 const { db } = require('../firebase')
 
 const { HYPERCERTS_COLLECTION } = require('../constants/collections')
+const { getSixMonthsAgoTimestamp } = require('../utils')
 const hypercertsRef = db.collection(HYPERCERTS_COLLECTION)
 
 const getHypercerts = async () => {
@@ -184,23 +185,26 @@ const saveHypercert = async hypercert => {
   }
 }
 
-const searchHypercerts = async searchInput => {
+const searchHypercerts = async (searchInput, lastSixMonths) => {
   try {
-    console.log(`searching hypercerts for ${searchInput}`)
-    const snapshot = await hypercertsRef.get()
+    let snapshot
 
-    if (snapshot.empty) {
-      return []
+    if (lastSixMonths === 'true') {
+      snapshot = await hypercertsRef
+        .where('creation', '>', getSixMonthsAgoTimestamp().toString())
+        .get()
     } else {
-      const hypercerts = snapshot.docs.map(doc => doc.data())
-      const searchResults = hypercerts.filter(h => {
-        return h.name.toLowerCase().includes(searchInput.toLowerCase())
-      })
-
-      searchResults.sort((a, b) => a.name.localeCompare(b.name))
-
-      return searchResults
+      snapshot = await hypercertsRef.get()
     }
+
+    const hypercerts = snapshot.docs.map(doc => doc.data())
+    const searchResults = hypercerts.filter(h => {
+      return h.name.toLowerCase().includes(searchInput.toLowerCase())
+    })
+
+    searchResults.sort((a, b) => a.name.localeCompare(b.name))
+
+    return searchResults
   } catch (e) {
     console.log(`error searching hypercerts: ${e}`)
   }
