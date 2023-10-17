@@ -111,11 +111,12 @@ const writeReviewsToDB = async (requestName, reviews) => {
 
     const attestation = await eas.getAttestation(attestationID)
 
+    const createdAt = attestation.time.toNumber()
     const decodedData = schemaEncoder.decodeData(attestation.data)
     const answers = decodedData[2].value.value
     const pdfIpfsHash = decodedData[3].value.value
 
-    reviewsArray.push({ ...data, pdfIpfsHash, answers })
+    reviewsArray.push({ ...data, pdfIpfsHash, answers, createdAt })
   }
 
   const data = {
