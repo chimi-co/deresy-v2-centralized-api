@@ -5,6 +5,7 @@ const { https, logger } = functions
 
 const { uploadPdf } = require('./PinataService')
 const { getHypercerts, searchHypercerts } = require('./HypercertsService')
+const { searchReviewsByHypercertID } = require('./ReviewsService')
 
 const app = express()
 
@@ -55,6 +56,20 @@ app.get('/search_hypercerts', (request, response) => {
         lastSixMonths,
       )
       response.send(hypercertResults)
+    } catch (error) {
+      logger.error('[ !!! ] Error: ', error)
+      throw new https.HttpsError(error.code, error.message)
+    }
+  })
+})
+
+app.get('/search_reviews', (request, response) => {
+  return cors(request, response, async () => {
+    try {
+      const { hypercertID } = request.query
+      const reviewsResults = await searchReviewsByHypercertID(hypercertID)
+
+      response.send(reviewsResults)
     } catch (error) {
       logger.error('[ !!! ] Error: ', error)
       throw new https.HttpsError(error.code, error.message)
