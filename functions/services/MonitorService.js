@@ -5,6 +5,8 @@ const { db } = require('../firebase')
 const web3 = require('../web3')
 const provider = require('../ethers')
 
+const { Client, cacheExchange, fetchExchange } = require('@urql/core')
+
 const {
   getGrantByTarget,
   getReviewRequest,
@@ -318,6 +320,68 @@ const processReviews = async startReviewBlock => {
   }
 }
 
+const processHypercerts = async startReviewBlock => {
+  const latestBlockNumber = await web3.eth.getBlockNumber()
+  if (latestBlockNumber > startReviewBlock) {
+    const smartContract = new web3.eth.Contract(
+      DERESY_CONTRACT_ABI,
+      CONTRACT_ADDRESS,
+    )
+    const snapshot = await mintedBlockRef
+      .where('monitorType', '==', 'reviews')
+      .limit(1)
+      .get()
+
+    const lastBlockDoc = snapshot.docs[0]
+    const latestBlockNumber = await web3.eth.getBlockNumber()
+    const blockIterations = parseInt(
+      (latestBlockNumber - startReviewBlock) / BLOCK_LIMIT,
+    )
+    const pastEvents = []
+    let endBlock
+    for (let i = 0; i <= blockIterations; i++) {
+      const startBlock = startReviewBlock + BLOCK_LIMIT * i
+      endBlock = startBlock + BLOCK_LIMIT
+      if (endBlock >= latestBlockNumber) {
+        endBlock = 'latest'
+      }
+      const pastReviewEvents = await smartContract.getPastEvents(
+        'SubmittedReview',
+        {},
+        { fromBlock: startBlock, toBlock: endBlock },
+      )
+      pastReviewEvents.forEach(ev => pastEvents.push(ev))
+    }
+
+    const updatedBlockNumber =
+      endBlock == 'latest' ? latestBlockNumber : endBlock
+    await mintedBlockRef
+      .doc(lastBlockDoc.id)
+      .update({ blockNumber: updatedBlockNumber })
+
+    pastEvents.sort((a, b) => {
+      return a.blockNumber - b.blockNumber
+    })
+
+    for (let i = 0; i < pastEvents.length; i++) {
+      const requestName = pastEvents[i].returnValues._requestName
+      const tx = pastEvents[i].transactionHash
+      const reviewRequest = await smartContract.methods
+        .getRequest(requestName)
+        .call()
+
+      await writeReviewsToDB(requestName, reviewRequest.reviews, tx)
+
+      await mintedBlockRef
+        .doc(lastBlockDoc.id)
+        .update({ lastRequestName: requestName })
+      await mintedBlockRef
+        .doc(lastBlockDoc.id)
+        .update({ lastSuccessTime: new Date() })
+    }
+  }
+}
+
 const monitorForms = functions
   .runWith({
     timeoutSeconds: 540,
@@ -428,8 +492,45 @@ const monitorReviews = functions
     }
   })
 
+const monitorHypercerts = functions
+  .runWith({
+    timeoutSeconds: 540,
+    memory: '8GB',
+  })
+  .pubsub.schedule('every 1 minutes')
+  .onRun(async () => {
+    try {
+      let lastHypercertCreation
+      const snapshot = await mintedBlockRef
+        .where('monitorType', '==', 'hypercerts')
+        .limit(1)
+        .get()
+      const doc = snapshot.docs[0]
+      if (!doc.exists) {
+        lastHypercertCreation = 0
+      } else {
+        lastHypercertCreation = doc.data().blockNumber
+      }
+
+      let startHypercertCreation = lastHypercertCreation + 1
+      if (
+        !doc.data().hypercertsInProgress || // check if an update is already in progress
+        new Date() - doc.data().lastSuccessTime.toDate() > 540000 // go ahead and run if it's been 9 minutes since last successful run
+      ) {
+        await mintedBlockRef.doc(doc.id).update({ hypercertsInProgress: true })
+        await processHypercerts(startHypercertCreation)
+        await mintedBlockRef.doc(doc.id).update({ hypercertsInProgress: false })
+        await mintedBlockRef.doc(doc.id).update({ lastSuccessTime: new Date() })
+      }
+    } catch (error) {
+      functions.logger.error('[ !!! ] Error: ', error)
+      throw new functions.https.HttpsError(error.code, error.message)
+    }
+  })
+
 module.exports = {
   monitorForms,
   monitorRequests,
   monitorReviews,
+  monitorHypercerts,
 }
