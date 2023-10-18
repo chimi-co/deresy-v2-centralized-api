@@ -4,7 +4,11 @@ const cors = require('cors')({ origin: true })
 const { https, logger } = functions
 
 const { uploadPdf } = require('./PinataService')
-const { getHypercerts, searchHypercerts } = require('./HypercertsService')
+const {
+  searchHypercerts,
+  getHypercertsCounts,
+  getLatestHypercerts,
+} = require('./HypercertsService')
 const { searchReviewsByHypercertID } = require('./ReviewsService')
 
 const app = express()
@@ -35,11 +39,23 @@ app.post('/generate_pdf', (request, response) => {
   })
 })
 
-app.get('/get_hypercerts', (request, response) => {
+app.get('/get_hypercerts_counts', (request, response) => {
   return cors(request, response, async () => {
     try {
-      const hypercerts = await getHypercerts()
-      response.send(hypercerts)
+      const hypercertsCounts = await getHypercertsCounts()
+      response.send(JSON.stringify(hypercertsCounts))
+    } catch (error) {
+      logger.error('[ !!! ] Error: ', error)
+      throw new https.HttpsError(error.code, error.message)
+    }
+  })
+})
+
+app.get('/get_latest_hypercerts', (request, response) => {
+  return cors(request, response, async () => {
+    try {
+      const latestHypercerts = await getLatestHypercerts()
+      response.send(JSON.stringify(latestHypercerts))
     } catch (error) {
       logger.error('[ !!! ] Error: ', error)
       throw new https.HttpsError(error.code, error.message)

@@ -1,9 +1,12 @@
 const functions = require('firebase-functions')
 const { groupBy } = require('lodash')
+const axios = require('axios')
 
 const { db } = require('../firebase')
 const web3 = require('../web3')
 const provider = require('../ethers')
+
+const { Client, cacheExchange, fetchExchange } = require('@urql/core')
 
 const {
   getGrantByTarget,
@@ -12,8 +15,11 @@ const {
   saveForm,
   saveRequest,
   saveReviews,
+  saveAmendment,
   updateGrant,
 } = require('./DeresyDBService')
+
+const { saveHypercert } = require('./HypercertsService')
 
 const { MINTED_BLOCK_COLLECTION } = require('../constants/collections')
 const { DERESY_CONTRACT_ABI } = require('../constants/contractConstants')
@@ -126,6 +132,49 @@ const writeReviewsToDB = async (requestName, reviews) => {
 
   await saveReviews(requestName, data)
   // TODO: add updateGrantsScore(requestName) function in this part when reviews monitor is working
+}
+
+const writeAmendmentsToDB = async amendmentUID => {
+  const schemaEncoder = new SchemaEncoder(
+    'string requestName, uint256 hypercertID, string amendment',
+  )
+  const eas = new EAS(EAS_CONTRACT_ADDRESS)
+  eas.connect(provider)
+
+  const amendmentAttestation = await eas.getAttestation(amendmentUID)
+  const decodedData = schemaEncoder.decodeData(amendmentAttestation.data)
+
+  const data = {
+    amendmentUID: amendmentUID,
+    refUID: amendmentAttestation.refUID,
+    requestName: decodedData[0].value.value,
+    hypercertID: decodedData[1].value.value.toString(),
+    amendment: decodedData[2].value.value,
+  }
+
+  await saveAmendment(data)
+}
+
+const writeHypercertToDB = async hypercert => {
+  let hypercertMetadata = {}
+  const claimUri = hypercert.uri.startsWith('ipfs://')
+    ? hypercert.uri.replace('ipfs://', '')
+    : hypercert.uri
+
+  try {
+    const response = await axios.get(`https://ipfs.io/ipfs/${claimUri}`)
+    hypercertMetadata = response.data
+    const name = hypercertMetadata.name || 'Name Unavailable'
+    const data = {
+      ...hypercert,
+      name,
+      processed: 2,
+    }
+
+    await saveHypercert(data)
+  } catch (error) {
+    console.error(`Error fetching/updating hypercert ${claimUri}:`)
+  }
 }
 
 const processForms = async startFormBlock => {
@@ -320,6 +369,110 @@ const processReviews = async startReviewBlock => {
   }
 }
 
+const processAmendments = async startAmendmentBlock => {
+  const latestBlockNumber = await web3.eth.getBlockNumber()
+  if (latestBlockNumber > startAmendmentBlock) {
+    const smartContract = new web3.eth.Contract(
+      DERESY_CONTRACT_ABI,
+      CONTRACT_ADDRESS,
+    )
+    const snapshot = await mintedBlockRef
+      .where('monitorType', '==', 'amendments')
+      .limit(1)
+      .get()
+
+    const lastBlockDoc = snapshot.docs[0]
+    const latestBlockNumber = await web3.eth.getBlockNumber()
+    const blockIterations = parseInt(
+      (latestBlockNumber - startAmendmentBlock) / BLOCK_LIMIT,
+    )
+    const pastEvents = []
+    let endBlock
+    for (let i = 0; i <= blockIterations; i++) {
+      const startBlock = startAmendmentBlock + BLOCK_LIMIT * i
+      endBlock = startBlock + BLOCK_LIMIT
+      if (endBlock >= latestBlockNumber) {
+        endBlock = 'latest'
+      }
+      const pastAmendmentEvents = await smartContract.getPastEvents(
+        'SubmittedAmendment',
+        {},
+        { fromBlock: startBlock, toBlock: endBlock },
+      )
+      pastAmendmentEvents.forEach(ev => pastEvents.push(ev))
+    }
+
+    const updatedBlockNumber =
+      endBlock == 'latest' ? latestBlockNumber : endBlock
+    await mintedBlockRef
+      .doc(lastBlockDoc.id)
+      .update({ blockNumber: updatedBlockNumber })
+
+    pastEvents.sort((a, b) => {
+      return a.blockNumber - b.blockNumber
+    })
+
+    for (let i = 0; i < pastEvents.length; i++) {
+      const amendmentUI = pastEvents[i].returnValues._uid
+      const tx = pastEvents[i].transactionHash
+
+      await writeAmendmentsToDB(amendmentUI, tx)
+
+      await mintedBlockRef
+        .doc(lastBlockDoc.id)
+        .update({ lastAmendmentUID: amendmentUI })
+      await mintedBlockRef
+        .doc(lastBlockDoc.id)
+        .update({ lastSuccessTime: new Date() })
+    }
+  }
+}
+
+const processHypercerts = async lastHypercertCreation => {
+  const snapshot = await mintedBlockRef
+    .where('monitorType', '==', 'hypercerts')
+    .limit(1)
+    .get()
+
+  const lastBlockDoc = snapshot.docs[0]
+
+  const client = new Client({
+    url: 'https://api.thegraph.com/subgraphs/name/hypercerts-admin/hypercerts-optimism-mainnet',
+    exchanges: [cacheExchange, fetchExchange],
+  })
+
+  let claimQuery = `
+    query claims($lastHypercertCreation: String) {
+      claims(
+        first: 1
+        orderBy: creation
+        orderDirection: asc
+        where: { creation_gt: $lastHypercertCreation }
+      ) {
+        id
+        creation
+        tokenID
+        uri
+      }
+    }
+  `
+  let claimFromQuery = await client.query(claimQuery, {
+    lastHypercertCreation: lastHypercertCreation.toString(),
+  })
+
+  if (
+    claimFromQuery &&
+    claimFromQuery.data &&
+    claimFromQuery.data.claims &&
+    claimFromQuery.data.claims.length > 0
+  ) {
+    await writeHypercertToDB(claimFromQuery.data.claims[0])
+    await mintedBlockRef
+      .doc(lastBlockDoc.id)
+      .update({ lastHypercertCreation: claimFromQuery.data.claims[0].creation })
+  }
+}
+
 const monitorForms = functions
   .runWith({
     timeoutSeconds: 540,
@@ -430,8 +583,81 @@ const monitorReviews = functions
     }
   })
 
+const monitorAmendments = functions
+  .runWith({
+    timeoutSeconds: 540,
+    memory: '8GB',
+  })
+  .pubsub.schedule('every 1 minutes')
+  .onRun(async () => {
+    try {
+      let lastAmendmentBlock
+      const snapshot = await mintedBlockRef
+        .where('monitorType', '==', 'amendments')
+        .limit(1)
+        .get()
+      const doc = snapshot.docs[0]
+      if (!doc.exists) {
+        lastAmendmentBlock = 0
+      } else {
+        lastAmendmentBlock = doc.data().blockNumber
+      }
+
+      let startAmendmentBlock = lastAmendmentBlock + 1
+      if (
+        !doc.data().amendmentsInProgress || // check if an update is already in progress
+        new Date() - doc.data().lastSuccessTime.toDate() > 540000 // go ahead and run if it's been 9 minutes since last successful run
+      ) {
+        await mintedBlockRef.doc(doc.id).update({ amendmentsInProgress: true })
+        await processAmendments(startAmendmentBlock)
+        await mintedBlockRef.doc(doc.id).update({ amendmentsInProgress: false })
+        await mintedBlockRef.doc(doc.id).update({ lastSuccessTime: new Date() })
+      }
+    } catch (error) {
+      functions.logger.error('[ !!! ] Error: ', error)
+      throw new functions.https.HttpsError(error.code, error.message)
+    }
+  })
+
+const monitorHypercerts = functions
+  .runWith({
+    timeoutSeconds: 540,
+    memory: '8GB',
+  })
+  .pubsub.schedule('every 1 minutes')
+  .onRun(async () => {
+    try {
+      let lastHypercertCreation
+      const snapshot = await mintedBlockRef
+        .where('monitorType', '==', 'hypercerts')
+        .limit(1)
+        .get()
+      const doc = snapshot.docs[0]
+      if (!doc.exists) {
+        lastHypercertCreation = 0
+      } else {
+        lastHypercertCreation = doc.data().lastHypercertCreation
+      }
+
+      if (
+        !doc.data().hypercertsInProgress || // check if an update is already in progress
+        new Date() - doc.data().lastSuccessTime.toDate() > 540000 // go ahead and run if it's been 9 minutes since last successful run
+      ) {
+        await mintedBlockRef.doc(doc.id).update({ hypercertsInProgress: true })
+        await processHypercerts(lastHypercertCreation)
+        await mintedBlockRef.doc(doc.id).update({ hypercertsInProgress: false })
+        await mintedBlockRef.doc(doc.id).update({ lastSuccessTime: new Date() })
+      }
+    } catch (error) {
+      functions.logger.error('[ !!! ] Error: ', error)
+      throw new functions.https.HttpsError(error.code, error.message)
+    }
+  })
+
 module.exports = {
   monitorForms,
   monitorRequests,
   monitorReviews,
+  monitorAmendments,
+  monitorHypercerts,
 }
