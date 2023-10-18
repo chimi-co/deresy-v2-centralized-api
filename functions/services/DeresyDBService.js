@@ -5,10 +5,12 @@ const {
   REVIEW_REQUESTS_COLLECTION,
   REVIEWS_COLLECTION,
   GRANTS_COLLECTION,
+  AMENDMENTS_COLLECTION,
 } = require('../constants/collections')
 const formsRef = db.collection(FORMS_COLLECTION)
 const reviewRequestsRef = db.collection(REVIEW_REQUESTS_COLLECTION)
 const reviewsRef = db.collection(REVIEWS_COLLECTION)
+const amendmentsRef = db.collection(AMENDMENTS_COLLECTION)
 const grantsRef = db.collection(GRANTS_COLLECTION)
 
 const saveForm = async (formID, data) => {
@@ -65,6 +67,24 @@ const saveReviews = async (requestName, data) => {
   }
 }
 
+const saveAmendment = async data => {
+  const snapshot = await amendmentsRef
+    .where('uid', '==', data.uid)
+    .limit(1)
+    .get()
+
+  if (snapshot.empty) {
+    await amendmentsRef.add({
+      ...data,
+    })
+  } else {
+    const document = amendmentsRef.doc(snapshot.docs[0].id)
+    await document.update({
+      ...data,
+    })
+  }
+}
+
 const updateGrant = async (id, payload) => {
   await grantsRef.doc(id).update({ ...payload })
 }
@@ -115,5 +135,6 @@ module.exports = {
   saveForm,
   saveRequest,
   saveReviews,
+  saveAmendment,
   updateGrant,
 }

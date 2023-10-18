@@ -3,6 +3,7 @@ const {
   monitorForms,
   monitorRequests,
   monitorReviews,
+  monitorAmendments,
   monitorHypercerts,
 } = require('./services/MonitorService')
 
@@ -11,3 +12,4 @@ exports.monitorForms = monitorForms
 exports.monitorRequests = monitorRequests
 exports.monitorReviews = monitorReviews
 exports.monitorHypercerts = monitorHypercerts
+exports.monitorAmendments = monitorAmendments
