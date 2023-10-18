@@ -111,7 +111,7 @@ async function getHypercertsNames() {
     const updates = []
 
     querySnapshot.forEach(doc => {
-      const hypercertRef = db.collection('yourCollection').doc(doc.id)
+      const hypercertRef = hypercertsRef.doc(doc.id)
 
       updates.push(
         db.runTransaction(async transaction => {

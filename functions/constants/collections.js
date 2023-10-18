@@ -5,4 +5,5 @@ module.exports = {
   REVIEW_REQUESTS_COLLECTION: 'reviewRequests',
   GRANTS_COLLECTION: 'grants',
   HYPERCERTS_COLLECTION: 'hypercerts',
+  AMENDMENTS_COLLECTION: 'amendments',
 }
