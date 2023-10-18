@@ -69,7 +69,7 @@ const saveReviews = async (requestName, data) => {
 
 const saveAmendment = async data => {
   const snapshot = await amendmentsRef
-    .where('uid', '==', data.uid)
+    .where('uid', '==', data.amendmentUID)
     .limit(1)
     .get()
 

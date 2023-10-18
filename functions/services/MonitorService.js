@@ -148,7 +148,7 @@ const writeAmendmentsToDB = async amendmentUID => {
     amendmentUID: amendmentUID,
     refUID: amendmentAttestation.refUID,
     requestName: decodedData[0].value.value,
-    hypercertID: decodedData[1].value.value,
+    hypercertID: decodedData[1].value.value.toString(),
     amendment: decodedData[2].value.value,
   }
 
@@ -165,7 +165,6 @@ const writeHypercertToDB = async hypercert => {
     const response = await axios.get(`https://ipfs.io/ipfs/${claimUri}`)
     hypercertMetadata = response.data
     const name = hypercertMetadata.name || 'Name Unavailable'
-
     const data = {
       ...hypercert,
       name,
@@ -457,7 +456,10 @@ const processHypercerts = async lastHypercertCreation => {
       }
     }
   `
-  let claimFromQuery = await client.query(claimQuery, lastHypercertCreation)
+  let claimFromQuery = await client.query(claimQuery, {
+    lastHypercertCreation: lastHypercertCreation.toString(),
+  })
+
   if (
     claimFromQuery &&
     claimFromQuery.data &&
