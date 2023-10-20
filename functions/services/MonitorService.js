@@ -143,6 +143,7 @@ const writeAmendmentsToDB = async amendmentUID => {
 
   const amendmentAttestation = await eas.getAttestation(amendmentUID)
   const decodedData = schemaEncoder.decodeData(amendmentAttestation.data)
+  const createdAt = amendmentAttestation.time.toNumber()
 
   const data = {
     amendmentUID: amendmentUID,
@@ -150,6 +151,7 @@ const writeAmendmentsToDB = async amendmentUID => {
     requestName: decodedData[0].value.value,
     hypercertID: decodedData[1].value.value.toString(),
     amendment: decodedData[2].value.value,
+    createdAt: createdAt,
   }
 
   await saveAmendment(data)
@@ -226,7 +228,7 @@ const processForms = async startFormBlock => {
         const reviewForm = await smartContract.methods
           .getReviewForm(formID)
           .call()
-
+        
         await writeFormToDB(formID, tx, reviewForm)
 
         await mintedBlockRef
