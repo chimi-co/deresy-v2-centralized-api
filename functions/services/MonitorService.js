@@ -67,14 +67,13 @@ const updateGrantsScore = async requestName => {
 }
 
 const writeFormToDB = async (formID, tx, reviewForm) => {
-  const choicesObj = reviewForm[2].map(choices => {
+  const choicesObj = reviewForm.choices.map(choices => {
     return { choices: choices }
   })
   const data = {
-    easSchemaID: reviewForm[3],
     formID: parseInt(formID),
-    questions: reviewForm[0],
-    types: reviewForm[1],
+    questions: reviewForm.questions,
+    types: reviewForm.questionTypes,
     choices: choicesObj,
     tx: tx,
   }
@@ -102,7 +101,7 @@ const writeReviewsToDB = async (requestName, reviews) => {
   const reviewsArray = []
 
   const schemaEncoder = new SchemaEncoder(
-    'string requestName, uint256 hypercertID, string[] answers, string pdfIpfsHash',
+    'string requestName, uint256 hypercertID, string[] answers, string pdfIpfsHash, string[] attachmentsIpfsHashes',
   )
   const eas = new EAS(EAS_CONTRACT_ADDRESS)
   eas.connect(provider)
@@ -121,8 +120,15 @@ const writeReviewsToDB = async (requestName, reviews) => {
     const decodedData = schemaEncoder.decodeData(attestation.data)
     const answers = decodedData[2].value.value
     const pdfIpfsHash = decodedData[3].value.value
+    const attachmentsIpfsHashes = decodedData[4].value.value
 
-    reviewsArray.push({ ...data, pdfIpfsHash, answers, createdAt })
+    reviewsArray.push({
+      ...data,
+      pdfIpfsHash,
+      attachmentsIpfsHashes,
+      answers,
+      createdAt,
+    })
   }
 
   const data = {
@@ -136,7 +142,7 @@ const writeReviewsToDB = async (requestName, reviews) => {
 
 const writeAmendmentsToDB = async amendmentUID => {
   const schemaEncoder = new SchemaEncoder(
-    'string requestName, uint256 hypercertID, string amendment',
+    'string requestName, uint256 hypercertID, string amendment, string[] attachmentsIpfsHashes',
   )
   const eas = new EAS(EAS_CONTRACT_ADDRESS)
   eas.connect(provider)
@@ -151,6 +157,7 @@ const writeAmendmentsToDB = async amendmentUID => {
     requestName: decodedData[0].value.value,
     hypercertID: decodedData[1].value.value.toString(),
     amendment: decodedData[2].value.value,
+    attachmentsIpfsHashes: decodedData[3].value.value,
     createdAt: createdAt,
   }
 
@@ -228,7 +235,7 @@ const processForms = async startFormBlock => {
         const reviewForm = await smartContract.methods
           .getReviewForm(formID)
           .call()
-        
+
         await writeFormToDB(formID, tx, reviewForm)
 
         await mintedBlockRef

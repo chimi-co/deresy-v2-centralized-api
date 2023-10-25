@@ -398,11 +398,6 @@ module.exports = {
     {
       inputs: [
         {
-          internalType: 'bytes32',
-          name: 'easSchemaID',
-          type: 'bytes32',
-        },
-        {
           internalType: 'string[]',
           name: 'questions',
           type: 'string[]',
@@ -440,71 +435,93 @@ module.exports = {
       name: 'getRequest',
       outputs: [
         {
-          internalType: 'address[]',
-          name: 'reviewers',
-          type: 'address[]',
-        },
-        {
-          internalType: 'uint256[]',
-          name: 'hypercertIDs',
-          type: 'uint256[]',
-        },
-        {
-          internalType: 'string[]',
-          name: 'hypercertIPFSHashes',
-          type: 'string[]',
-        },
-        {
-          internalType: 'string',
-          name: 'formIpfsHash',
-          type: 'string',
-        },
-        {
-          internalType: 'uint256',
-          name: 'rewardPerReview',
-          type: 'uint256',
-        },
-        {
           components: [
             {
               internalType: 'address',
-              name: 'reviewer',
+              name: 'sponsor',
+              type: 'address',
+            },
+            {
+              internalType: 'address[]',
+              name: 'reviewers',
+              type: 'address[]',
+            },
+            {
+              internalType: 'uint256[]',
+              name: 'hypercertIDs',
+              type: 'uint256[]',
+            },
+            {
+              internalType: 'string[]',
+              name: 'hypercertIPFSHashes',
+              type: 'string[]',
+            },
+            {
+              internalType: 'string',
+              name: 'formIpfsHash',
+              type: 'string',
+            },
+            {
+              internalType: 'uint256',
+              name: 'rewardPerReview',
+              type: 'uint256',
+            },
+            {
+              components: [
+                {
+                  internalType: 'address',
+                  name: 'reviewer',
+                  type: 'address',
+                },
+                {
+                  internalType: 'uint256',
+                  name: 'hypercertID',
+                  type: 'uint256',
+                },
+                {
+                  internalType: 'bytes32',
+                  name: 'attestationID',
+                  type: 'bytes32',
+                },
+                {
+                  internalType: 'bytes32[]',
+                  name: 'amendmentsUIDs',
+                  type: 'bytes32[]',
+                },
+              ],
+              internalType: 'struct DeresyResolver.Review[]',
+              name: 'reviews',
+              type: 'tuple[]',
+            },
+            {
+              internalType: 'bool',
+              name: 'isClosed',
+              type: 'bool',
+            },
+            {
+              internalType: 'address',
+              name: 'paymentTokenAddress',
               type: 'address',
             },
             {
               internalType: 'uint256',
-              name: 'hypercertID',
+              name: 'fundsLeft',
               type: 'uint256',
             },
             {
-              internalType: 'bytes32',
-              name: 'attestationID',
-              type: 'bytes32',
+              internalType: 'uint256',
+              name: 'reviewFormIndex',
+              type: 'uint256',
             },
             {
-              internalType: 'bytes32[]',
-              name: 'amendmentsUIDs',
-              type: 'bytes32[]',
+              internalType: 'string',
+              name: 'name',
+              type: 'string',
             },
           ],
-          internalType: 'struct DeresyResolver.Review[]',
-          name: 'reviews',
-          type: 'tuple[]',
-        },
-        {
-          internalType: 'uint256',
-          name: 'reviewFormIndex',
-          type: 'uint256',
-        },
-        {
-          internalType: 'bool',
-          name: 'isClosed',
-          type: 'bool',
-        },
-        {
-          internalType: 'address',
-          name: 'paymentTokenAddress',
-          type: 'address',
+          internalType: 'struct DeresyResolver.ReviewRequest',
+          name: 'reviewRequest',
+          type: 'tuple',
         },
       ],
       stateMutability: 'view',
@@ -521,24 +538,26 @@ module.exports = {
       name: 'getRequestReviewForm',
       outputs: [
         {
-          internalType: 'string[]',
-          name: '',
-          type: 'string[]',
-        },
-        {
-          internalType: 'enum DeresyResolver.QuestionType[]',
-          name: '',
-          type: 'uint8[]',
-        },
-        {
-          internalType: 'string[][]',
-          name: 'choices',
-          type: 'string[][]',
-        },
-        {
-          internalType: 'bytes32',
-          name: '',
-          type: 'bytes32',
+          components: [
+            {
+              internalType: 'string[]',
+              name: 'questions',
+              type: 'string[]',
+            },
+            {
+              internalType: 'enum DeresyResolver.QuestionType[]',
+              name: 'questionTypes',
+              type: 'uint8[]',
+            },
+            {
+              internalType: 'string[][]',
+              name: 'choices',
+              type: 'string[][]',
+            },
+          ],
+          internalType: 'struct DeresyResolver.ReviewForm',
+          name: 'requestReviewForm',
+          type: 'tuple',
         },
       ],
       stateMutability: 'view',
@@ -555,24 +574,26 @@ module.exports = {
       name: 'getReviewForm',
       outputs: [
         {
-          internalType: 'string[]',
-          name: 'questions',
-          type: 'string[]',
-        },
-        {
-          internalType: 'enum DeresyResolver.QuestionType[]',
-          name: 'questionTypes',
-          type: 'uint8[]',
-        },
-        {
-          internalType: 'string[][]',
-          name: 'choices',
-          type: 'string[][]',
-        },
-        {
-          internalType: 'bytes32',
-          name: 'easSchemaID',
-          type: 'bytes32',
+          components: [
+            {
+              internalType: 'string[]',
+              name: 'questions',
+              type: 'string[]',
+            },
+            {
+              internalType: 'enum DeresyResolver.QuestionType[]',
+              name: 'questionTypes',
+              type: 'uint8[]',
+            },
+            {
+              internalType: 'string[][]',
+              name: 'choices',
+              type: 'string[][]',
+            },
+          ],
+          internalType: 'struct DeresyResolver.ReviewForm',
+          name: 'reviewForm',
+          type: 'tuple',
         },
       ],
       stateMutability: 'view',
