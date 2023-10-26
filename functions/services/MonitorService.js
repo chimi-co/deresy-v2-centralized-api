@@ -142,7 +142,7 @@ const writeReviewsToDB = async (requestName, reviews) => {
 
 const writeAmendmentsToDB = async amendmentUID => {
   const schemaEncoder = new SchemaEncoder(
-    'string requestName, uint256 hypercertID, string amendment, string[] attachmentsIpfsHashes',
+    'string requestName, uint256 hypercertID, string amendment, string pdfIpfsHash, string[] attachmentsIpfsHashes',
   )
   const eas = new EAS(EAS_CONTRACT_ADDRESS)
   eas.connect(provider)
@@ -157,7 +157,8 @@ const writeAmendmentsToDB = async amendmentUID => {
     requestName: decodedData[0].value.value,
     hypercertID: decodedData[1].value.value.toString(),
     amendment: decodedData[2].value.value,
-    attachmentsIpfsHashes: decodedData[3].value.value,
+    pdfIpfsHash: decodedData[3].value.value,
+    attachmentsIpfsHashes: decodedData[4].value.value,
     createdAt: createdAt,
   }
 
