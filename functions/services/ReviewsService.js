@@ -3,6 +3,7 @@ const {
   REVIEWS_COLLECTION,
   GRANTS_COLLECTION,
 } = require('../constants/collections')
+const { amendmentsByAttestationId } = require('./AmendmentsService')
 const grantsRef = db.collection(GRANTS_COLLECTION)
 const reviewsRef = db.collection(REVIEWS_COLLECTION)
 
@@ -25,17 +26,20 @@ const filterValidReviews = (reviewData, requestNames, hypercertID) => {
 
 const searchReviewsByHypercertID = async hypercertID => {
   try {
+    console.log(hypercertID)
     const grantQuery = await fetchGrantByHypercertID(hypercertID)
     if (grantQuery.empty) return []
+
+    console.log('encontro grant')
 
     const grantData = grantQuery.docs[0].data()
     const requestNames = grantData.request_names || []
     if (requestNames.length === 0) return []
 
     const reviewsQuery = await fetchAllReviews()
-    const matchedReviews = []
+    const reviewDocs = reviewsQuery.docs
 
-    reviewsQuery.forEach(doc => {
+    const matchedReviewsPromises = reviewDocs.map(async doc => {
       const reviewData = doc.data()
       const validReviews = filterValidReviews(
         reviewData,
@@ -43,15 +47,26 @@ const searchReviewsByHypercertID = async hypercertID => {
         hypercertID,
       )
 
-      validReviews.forEach(validReview => {
-        matchedReviews.push({
-          attestationID: validReview.attestationID,
-          pdfIpfsHash: validReview.pdfIpfsHash ? validReview.pdfIpfsHash : null,
-        })
-      })
+      return Promise.all(
+        validReviews.map(async validReview => {
+          const amendmentsAttachmentsIpfsHashes =
+            await amendmentsByAttestationId(validReview.attestationID)
+          return {
+            attestationID: validReview.attestationID,
+            pdfIpfsHash: validReview.pdfIpfsHash
+              ? validReview.pdfIpfsHash
+              : null,
+            attachmentsIpfsHashes: validReview.attachmentsIpfsHashes
+              ? validReview.attachmentsIpfsHashes
+              : null,
+            amendmentsAttachmentsIpfsHashes: amendmentsAttachmentsIpfsHashes,
+          }
+        }),
+      )
     })
 
-    return matchedReviews
+    const allMatchedReviews = await Promise.all(matchedReviewsPromises)
+    return allMatchedReviews.flat()
   } catch (error) {
     console.error('Error fetching reviews:', error)
     return []
