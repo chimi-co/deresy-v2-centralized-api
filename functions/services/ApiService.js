@@ -99,23 +99,23 @@ app.post('/upload-file-to-ipfs', async (req, res) => {
     try {
       const payload = JSON.parse(req.body)
 
-      const fileBuffer = Buffer.from(payload.file, 'base64');
+      const fileBuffer = Buffer.from(payload.file, 'base64')
 
       const readableStream = new Readable({
         read() {
-          this.push(fileBuffer);
-          this.push(null);
-        }
-      });
-      
-      const ipfsHash = await uploadFileToIpfs(readableStream);
-      res.status(200).send({ ipfsHash });
+          this.push(fileBuffer)
+          this.push(null)
+        },
+      })
+
+      const ipfsHash = await uploadFileToIpfs(readableStream)
+      res.status(200).send({ ipfsHash })
     } catch (error) {
-      logger.error('[ !!! ] Error: ', error);
-      res.status(500).send({ error: error.message });
+      logger.error('[ !!! ] Error: ', error)
+      res.status(500).send({ error: error.message })
     }
-  });
-});
+  })
+})
 
 exports.api = functions
   .runWith({ memory: '1GB', timeoutSeconds: 540 })

@@ -42,16 +42,16 @@ const uploadPdf = async (pdfData = {}) => {
   return await pinata.pinFileToIPFS(stream, pinataOptions)
 }
 
-const uploadFileToIpfs = async (fileBuffer) => {
+const uploadFileToIpfs = async fileBuffer => {
   const options = {
     pinataMetadata: {
-      name: 'test-file'
-    }
+      name: 'UPLOAD-FILE',
+    },
   }
 
-  const result = await pinata.pinFileToIPFS(fileBuffer, options);
-  return result.IpfsHash;
-};
+  const result = await pinata.pinFileToIPFS(fileBuffer, options)
+  return result.IpfsHash
+}
 
 module.exports = {
   uploadPdf,
