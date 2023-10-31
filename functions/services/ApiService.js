@@ -2,8 +2,9 @@ const functions = require('firebase-functions')
 const express = require('express')
 const cors = require('cors')({ origin: true })
 const { https, logger } = functions
+const { Readable } = require('stream')
 
-const { uploadPdf } = require('./PinataService')
+const { uploadPdf, uploadFileToIpfs } = require('./PinataService')
 const {
   searchHypercerts,
   getHypercertsCounts,
@@ -93,6 +94,29 @@ app.get('/search_reviews', (request, response) => {
   })
 })
 
+app.post('/upload-file-to-ipfs', async (req, res) => {
+  return cors(req, res, async () => {
+    try {
+      const payload = JSON.parse(req.body)
+
+      const fileBuffer = Buffer.from(payload.file, 'base64')
+
+      const readableStream = new Readable({
+        read() {
+          this.push(fileBuffer)
+          this.push(null)
+        },
+      })
+
+      const ipfsHash = await uploadFileToIpfs(readableStream)
+      res.status(200).send({ ipfsHash })
+    } catch (error) {
+      logger.error('[ !!! ] Error: ', error)
+      res.status(500).send({ error: error.message })
+    }
+  })
+})
+
 exports.api = functions
-  .runWith({ memory: '512MB', timeoutSeconds: 540 })
+  .runWith({ memory: '1GB', timeoutSeconds: 540 })
   .https.onRequest(app)
