@@ -10,7 +10,10 @@ const pdfGenerator = async review => {
   const htmlContent = reviewToHtml(review)
 
   await page.setContent(htmlContent)
-  const pdfBuffer = await page.pdf({ format: 'A4' })
+  const pdfBuffer = await page.pdf({
+    format: 'A4',
+    margin: { top: '100px', bottom: '100px' },
+  })
 
   await browser.close()
   return pdfBuffer

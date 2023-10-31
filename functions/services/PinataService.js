@@ -12,11 +12,24 @@ const prepareReviewForm = ({ easSchemaID, questions, questionOptions }) => ({
   questions,
 })
 
-const prepareReview = ({ name, answers, hypercertID, accountID }) => ({
+const prepareReview = ({
+  name,
+  answers,
+  hypercertID,
+  accountID,
+  amendments,
+  reviewCreatedAt,
+  attachmentsIpfsHashes,
+  grantID,
+}) => ({
   name,
   answers,
   hypercertID,
   reviewer: accountID,
+  amendments,
+  createdAt: reviewCreatedAt,
+  attachmentsIpfsHashes,
+  grantID,
 })
 
 const getPinataOptions = ({ hypercertID, accountID }) => ({
