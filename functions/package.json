@@ -17,6 +17,7 @@
     "grants:add": "node -e \"require('./scripts/GrantsPopulator').addGrants()\"",
     "hypercerts:add": "node -e \"require('./scripts/HypercertsPopulator').getAllHypercerts()\"",
     "hypercerts:process": "node -e \"require('./scripts/HypercertsPopulator').getHypercertsNames()\"",
+    "hypercerts:fetch": "node -e \"require('./scripts/HypercertsFetcher').fetchHypercert(process.argv[1])\"",
     "gcp-build": "node node_modules/puppeteer/install.js"
   },
   "engines": {
