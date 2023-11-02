@@ -71,3 +71,4 @@ node_modules/
 
 functions/.env*
 .env.*
+deresy-prod.json
