@@ -7,19 +7,22 @@ const amendmentsByAttestationId = async attestationID => {
     const querySnapshot = await amendmentsRef
       .where('refUID', '==', attestationID)
       .get()
-    const allAttachmentsIpfsHashes = []
+
+    const amendments = []
 
     querySnapshot.forEach(doc => {
       const amendmentData = doc.data()
-      if (
-        amendmentData.attachmentsIpfsHashes &&
-        Array.isArray(amendmentData.attachmentsIpfsHashes)
-      ) {
-        allAttachmentsIpfsHashes.push(...amendmentData.attachmentsIpfsHashes)
+
+      const amendmentObj = {
+        amendmentUID: amendmentData.amendmentUID,
+        pdfIpfsHash: amendmentData.pdfIpfsHash,
+        attachmentsIpfsHashes: amendmentData.attachmentsIpfsHashes || []
       }
+      
+      amendments.push(amendmentObj)
     })
 
-    return allAttachmentsIpfsHashes
+    return amendments
   } catch (error) {
     console.error('Error fetching amendments:', error)
     return []
