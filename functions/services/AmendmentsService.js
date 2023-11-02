@@ -16,9 +16,9 @@ const amendmentsByAttestationId = async attestationID => {
       const amendmentObj = {
         amendmentUID: amendmentData.amendmentUID,
         pdfIpfsHash: amendmentData.pdfIpfsHash,
-        attachmentsIpfsHashes: amendmentData.attachmentsIpfsHashes || []
+        attachmentsIpfsHashes: amendmentData.attachmentsIpfsHashes || [],
       }
-      
+
       amendments.push(amendmentObj)
     })
 

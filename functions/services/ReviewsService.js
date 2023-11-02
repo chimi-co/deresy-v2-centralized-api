@@ -49,12 +49,18 @@ const searchReviewsByHypercertID = async hypercertID => {
 
       return Promise.all(
         validReviews.map(async validReview => {
-          const amendments = await amendmentsByAttestationId(validReview.attestationID)
+          const amendments = await amendmentsByAttestationId(
+            validReview.attestationID,
+          )
           return {
             attestationID: validReview.attestationID,
-            pdfIpfsHash: validReview.pdfIpfsHash ? validReview.pdfIpfsHash : null,
-            attachmentsIpfsHashes: validReview.attachmentsIpfsHashes ? validReview.attachmentsIpfsHashes : null,
-            amendments: amendments
+            pdfIpfsHash: validReview.pdfIpfsHash
+              ? validReview.pdfIpfsHash
+              : null,
+            attachmentsIpfsHashes: validReview.attachmentsIpfsHashes
+              ? validReview.attachmentsIpfsHashes
+              : null,
+            amendments: amendments,
           }
         }),
       )
