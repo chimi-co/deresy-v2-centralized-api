@@ -73,15 +73,16 @@ const formatDate = unixTimestamp => {
   return date.toLocaleString('en-US', options)
 }
 
-const generateHeader = (name, grantID) => `
+const generateHeader = (name, tokenID) => `
   <h1 style="margin-bottom: 5px !important">${name}</h1>
-  <a href="https://gitcoinreviews.co/grants/${grantID}" target="_blank">https://gitcoinreviews.co/grants/${grantID}</a>
+  <a href="https://gitcoinreviews.co/hypercerts/${tokenID}" target="_blank">https://gitcoinreviews.co/hypercerts/${tokenID}</a>
   <h2 style="margin-top: 30px !important">Summary</h2>
 `
 
 const generateReviewerSection = (
   reviewer,
   hypercertID,
+  attestationID,
   easSchemaID,
   createdAt,
   attachmentsIpfsHashes,
@@ -105,7 +106,16 @@ const generateReviewerSection = (
     `
   }
 
+  let attestationIdSection = ''
+
+  if (attestationID) {
+    attestationIdSection = `
+      <p><strong>Attestation ID:</strong><a href="https://optimism-goerli-bedrock.easscan.org/attestation/view/${attestationID}">${attestationID}</a></p>
+    `
+  }
+
   return `
+    ${attestationIdSection}
     <p><strong>Reviewer:</strong> ${reviewer}</p>
     <p><strong>Hypercert ID:</strong> ${hypercertID}</p>
     <p>
@@ -129,11 +139,15 @@ const generateQuestionsSection = questions => {
 
 const generateAmendmentsSection = amendments => {
   return amendments
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .map(({ amendment, attachmentsIpfsHashes, createdAt }, index) => {
-      let attachmentsSection = ''
-      if (attachmentsIpfsHashes && attachmentsIpfsHashes.length > 0) {
-        attachmentsSection = `
+    .sort((a, b) => a.createdAt - b.createdAt)
+    .map(
+      (
+        { amendment, attachmentsIpfsHashes, createdAt, amendmentUID },
+        index,
+      ) => {
+        let attachmentsSection = ''
+        if (attachmentsIpfsHashes && attachmentsIpfsHashes.length > 0) {
+          attachmentsSection = `
             <p>Attachments:</p>
             <ul>
               ${attachmentsIpfsHashes
@@ -147,18 +161,27 @@ const generateAmendmentsSection = amendments => {
                 .join('')}
             </ul>
           `
-      }
+        }
 
-      return `
+        let amendmentUIdSection = ''
+        if (amendmentUID) {
+          amendmentUIdSection = `
+          <p><strong>Attestation ID:</strong> <a href="https://optimism-goerli-bedrock.easscan.org/attestation/view/${amendmentUID}">${amendmentUID}</a></p>
+        `
+        }
+
+        return `
           <p><strong style="font-size: 16px !important">Amendment ${
             index + 1
           }</strong>  (${formatDate(createdAt)})</p>
+          ${amendmentUIdSection}
           <div class="amendment-card">${marked.parse(amendment)}</div>
           ${attachmentsSection}
           <hr/>
           <br/>
         `
-    })
+      },
+    )
     .join('')
 }
 
@@ -173,7 +196,8 @@ const reviewToHtml = (review = {}) => {
     amendments,
     createdAt,
     attachmentsIpfsHashes,
-    grantID,
+    tokenID,
+    attestationID,
   } = review
   let amendmentsSection = ''
 
@@ -186,17 +210,18 @@ const reviewToHtml = (review = {}) => {
   }
   return `
     <style>${CSS_STYLES}</style>
-    ${generateHeader(name, grantID)}
+    ${generateHeader(name, tokenID)}
     <p>${summary}</p>
+    <h2>Review</h2>
     ${generateReviewerSection(
       reviewer,
       hypercertID,
+      attestationID,
       easSchemaID,
       createdAt,
       attachmentsIpfsHashes,
     )}
     <br>
-    <h2>Review</h2>
     ${generateQuestionsSection(questions)}
     ${amendmentsSection}
   `
@@ -212,8 +237,9 @@ const formatReviews = (reviewForm, review = {}) => {
     summary,
     createdAt,
     attachmentsIpfsHashes,
-    grantID,
+    tokenID,
     amendments,
+    attestationID,
   } = review
 
   const values = questions.map((question, index) => {
@@ -233,7 +259,8 @@ const formatReviews = (reviewForm, review = {}) => {
     questions: values,
     createdAt,
     attachmentsIpfsHashes,
-    grantID,
+    tokenID,
+    attestationID,
     amendments,
   }
 }

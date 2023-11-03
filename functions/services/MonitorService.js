@@ -17,6 +17,8 @@ const {
   saveReviews,
   saveAmendment,
   updateGrant,
+  getHypercert,
+  updateHypercert,
 } = require('./DeresyDBService')
 
 const { saveHypercert } = require('./HypercertsService')
@@ -78,6 +80,32 @@ const writeFormToDB = async (formID, tx, reviewForm) => {
     tx: tx,
   }
   await saveForm(formID, data)
+}
+
+const fetchRequestHypercerts = async hypercertIDs => {
+  for (const hypercertID of hypercertIDs) {
+    const hypercert = await getHypercert(hypercertID)
+    if (hypercert.processed === 2) {
+      const hypercertUri = hypercert.uri.startsWith('ipfs://')
+        ? hypercert.uri.replace('ipfs://', '')
+        : hypercert.uri
+      const hypercertMetadataResponse = await axios.get(
+        `https://ipfs.io/ipfs/${hypercertUri}`,
+      )
+      if (
+        hypercertMetadataResponse &&
+        hypercertMetadataResponse.data !== null &&
+        hypercertMetadataResponse.data !== undefined
+      ) {
+        const hypercertMetadata = hypercertMetadataResponse.data
+        await updateHypercert(hypercertID, {
+          ...hypercert,
+          metadata: hypercertMetadata,
+          processed: 3,
+        })
+      }
+    }
+  }
 }
 
 const writeRequestToDB = async (requestName, reviewRequest, tx) => {
@@ -305,6 +333,7 @@ const processRequests = async startRequestBlock => {
         .getRequest(requestName)
         .call()
 
+      await fetchRequestHypercerts(reviewRequest.hypercertIDs)
       await writeRequestToDB(requestName, reviewRequest, tx)
 
       await mintedBlockRef

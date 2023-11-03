@@ -1,4 +1,4 @@
-const { getGrantById } = require('./DeresyDBService')
+const { getHypercert } = require('./DeresyDBService')
 
 const { Readable } = require('stream')
 
@@ -20,7 +20,8 @@ const prepareReview = ({
   amendments,
   reviewCreatedAt,
   attachmentsIpfsHashes,
-  grantID,
+  tokenID,
+  attestationID,
 }) => ({
   name,
   answers,
@@ -29,7 +30,8 @@ const prepareReview = ({
   amendments,
   createdAt: reviewCreatedAt,
   attachmentsIpfsHashes,
-  grantID,
+  tokenID,
+  attestationID,
 })
 
 const getPinataOptions = ({ hypercertID, accountID }) => ({
@@ -42,8 +44,11 @@ const uploadPdf = async (pdfData = {}) => {
   const pinataOptions = getPinataOptions(pdfData)
   const reviewForm = prepareReviewForm(pdfData)
   const review = prepareReview(pdfData)
-  const grantDetails = await getGrantById(pdfData.grantID)
-  const summary = grantDetails ? grantDetails.summary : ''
+  const hypercertDetails = await getHypercert(pdfData.tokenID)
+  const summary =
+    hypercertDetails && hypercertDetails.metadata
+      ? hypercertDetails.metadata.description
+      : ''
 
   const formattedReview = formatReviews(reviewForm, { ...review, summary })
   const pdf = await pdfGenerator(formattedReview)

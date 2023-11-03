@@ -6,12 +6,14 @@ const {
   REVIEWS_COLLECTION,
   GRANTS_COLLECTION,
   AMENDMENTS_COLLECTION,
+  HYPERCERTS_COLLECTION,
 } = require('../constants/collections')
 const formsRef = db.collection(FORMS_COLLECTION)
 const reviewRequestsRef = db.collection(REVIEW_REQUESTS_COLLECTION)
 const reviewsRef = db.collection(REVIEWS_COLLECTION)
 const amendmentsRef = db.collection(AMENDMENTS_COLLECTION)
 const grantsRef = db.collection(GRANTS_COLLECTION)
+const hypercertsRef = db.collection(HYPERCERTS_COLLECTION)
 
 const saveForm = async (formID, data) => {
   const snapshot = await formsRef
@@ -127,6 +129,35 @@ const getGrantById = async grantID => {
   return snapshot.docs[0].data()
 }
 
+const getHypercert = async tokenID => {
+  const snapshot = await hypercertsRef
+    .where('tokenID', '==', tokenID)
+    .limit(1)
+    .get()
+
+  if (snapshot.empty) {
+    return null
+  }
+
+  return snapshot.docs[0].data()
+}
+
+const updateHypercert = async (tokenID, payload) => {
+  const snapshot = await hypercertsRef
+    .where('tokenID', '==', tokenID)
+    .limit(1)
+    .get()
+
+  if (snapshot.empty) {
+    return
+  } else {
+    const document = hypercertsRef.doc(snapshot.docs[0].id)
+    await document.update({
+      ...payload,
+    })
+  }
+}
+
 module.exports = {
   getGrantById,
   getGrantByTarget,
@@ -137,4 +168,6 @@ module.exports = {
   saveReviews,
   saveAmendment,
   updateGrant,
+  getHypercert,
+  updateHypercert,
 }
