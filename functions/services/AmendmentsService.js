@@ -6,6 +6,7 @@ const amendmentsByAttestationId = async attestationID => {
   try {
     const querySnapshot = await amendmentsRef
       .where('refUID', '==', attestationID)
+      .orderBy('createdAt', 'desc')
       .get()
 
     const amendments = []
@@ -15,6 +16,7 @@ const amendmentsByAttestationId = async attestationID => {
 
       const amendmentObj = {
         amendmentUID: amendmentData.amendmentUID,
+        createdAt: amendmentData.createdAt,
         pdfIpfsHash: amendmentData.pdfIpfsHash,
         attachmentsIpfsHashes: amendmentData.attachmentsIpfsHashes || [],
       }

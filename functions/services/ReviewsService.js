@@ -12,7 +12,7 @@ const fetchGrantByHypercertID = async hypercertID => {
 }
 
 const fetchAllReviews = async () => {
-  return await reviewsRef.get()
+  return await reviewsRef.orderBy('createdAt', 'desc').get()
 }
 
 const filterValidReviews = (reviewData, requestNames, hypercertID) => {
@@ -29,8 +29,6 @@ const searchReviewsByHypercertID = async hypercertID => {
     console.log(hypercertID)
     const grantQuery = await fetchGrantByHypercertID(hypercertID)
     if (grantQuery.empty) return []
-
-    console.log('encontro grant')
 
     const grantData = grantQuery.docs[0].data()
     const requestNames = grantData.request_names || []
@@ -54,6 +52,7 @@ const searchReviewsByHypercertID = async hypercertID => {
           )
           return {
             attestationID: validReview.attestationID,
+            createdAt: validReview.createdAt,
             pdfIpfsHash: validReview.pdfIpfsHash
               ? validReview.pdfIpfsHash
               : null,
