@@ -15,9 +15,9 @@ const amendmentsRef = db.collection(AMENDMENTS_COLLECTION)
 const grantsRef = db.collection(GRANTS_COLLECTION)
 const hypercertsRef = db.collection(HYPERCERTS_COLLECTION)
 
-const saveForm = async (formID, data) => {
+const saveForm = async (formName, data) => {
   const snapshot = await formsRef
-    .where('formID', '==', parseInt(formID))
+    .where('formName', '==', formName)
     .limit(1)
     .get()
 

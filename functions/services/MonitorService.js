@@ -68,18 +68,18 @@ const updateGrantsScore = async requestName => {
   functions.logger.log('Grants scores was updated')
 }
 
-const writeFormToDB = async (formID, tx, reviewForm) => {
+const writeFormToDB = async (formName, tx, reviewForm) => {
   const choicesObj = reviewForm.choices.map(choices => {
     return { choices: choices }
   })
   const data = {
-    formID: parseInt(formID),
+    formName: formName,
     questions: reviewForm.questions,
     types: reviewForm.questionTypes,
     choices: choicesObj,
     tx: tx,
   }
-  await saveForm(formID, data)
+  await saveForm(formName, data)
 }
 
 const fetchRequestHypercerts = async hypercertIDs => {
@@ -258,22 +258,20 @@ const processForms = async startFormBlock => {
     })
 
     for (let i = 0; i < pastEvents.length; i++) {
-      const formID = pastEvents[i].returnValues._formId
-      if (formID > lastBlockDoc.data().lastFormID) {
-        const tx = pastEvents[i].transactionHash
-        const reviewForm = await smartContract.methods
-          .getReviewForm(formID)
-          .call()
+      const formName = pastEvents[i].returnValues._formName
+      const tx = pastEvents[i].transactionHash
+      const reviewForm = await smartContract.methods
+        .getReviewForm(formName)
+        .call()
 
-        await writeFormToDB(formID, tx, reviewForm)
+      await writeFormToDB(formName, tx, reviewForm)
 
-        await mintedBlockRef
-          .doc(lastBlockDoc.id)
-          .update({ lastFormID: parseInt(formID) })
-        await mintedBlockRef
-          .doc(lastBlockDoc.id)
-          .update({ lastSuccessTime: new Date() })
-      }
+      await mintedBlockRef
+        .doc(lastBlockDoc.id)
+        .update({ lastFormName: formName })
+      await mintedBlockRef
+        .doc(lastBlockDoc.id)
+        .update({ lastSuccessTime: new Date() })
     }
   }
 }
