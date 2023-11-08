@@ -386,7 +386,7 @@ module.exports = {
         },
         {
           internalType: 'string',
-          name: 'reviewFormIndex',
+          name: 'reviewFormName',
           type: 'string',
         },
       ],
@@ -593,6 +593,19 @@ module.exports = {
           internalType: 'struct DeresyResolver.ReviewForm',
           name: 'reviewForm',
           type: 'tuple',
+        },
+      ],
+      stateMutability: 'view',
+      type: 'function',
+    },
+    {
+      inputs: [],
+      name: 'getReviewFormsNames',
+      outputs: [
+        {
+          internalType: 'string[]',
+          name: '',
+          type: 'string[]',
         },
       ],
       stateMutability: 'view',

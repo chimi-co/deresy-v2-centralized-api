@@ -115,7 +115,7 @@ const writeRequestToDB = async (requestName, reviewRequest, tx) => {
     isClosed: reviewRequest.isClosed,
     requestName: requestName,
     reviewers: reviewRequest.reviewers,
-    reviewFormIndex: reviewRequest.reviewFormIndex,
+    reviewFormName: reviewRequest.reviewFormName,
     rewardPerReview: reviewRequest.rewardPerReview,
     paymentTokenAddress: reviewRequest.paymentTokenAddress,
     targetsIPFSHashes: reviewRequest.hypercertIPFSHashes,
