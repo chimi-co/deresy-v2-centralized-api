@@ -6,7 +6,6 @@ const amendmentsByAttestationId = async attestationID => {
   try {
     const querySnapshot = await amendmentsRef
       .where('refUID', '==', attestationID)
-      .orderBy('createdAt', 'desc')
       .get()
 
     const amendments = []
@@ -24,7 +23,7 @@ const amendmentsByAttestationId = async attestationID => {
       amendments.push(amendmentObj)
     })
 
-    return amendments
+    return amendments.sort((a, b) => b.createdAt - a.createdAt)
   } catch (error) {
     console.error('Error fetching amendments:', error)
     return []

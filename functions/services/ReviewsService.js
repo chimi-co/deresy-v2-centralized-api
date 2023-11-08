@@ -1,19 +1,8 @@
 const { db } = require('../firebase')
-const {
-  REVIEWS_COLLECTION,
-  GRANTS_COLLECTION,
-} = require('../constants/collections')
+const { REVIEWS_COLLECTION } = require('../constants/collections')
 const { amendmentsByAttestationId } = require('./AmendmentsService')
-const grantsRef = db.collection(GRANTS_COLLECTION)
+const { findReviewRequestsByHypercertID } = require('./ReviewRequestsService')
 const reviewsRef = db.collection(REVIEWS_COLLECTION)
-
-const fetchGrantByHypercertID = async hypercertID => {
-  return await grantsRef.where('hypercertID', '==', hypercertID).get()
-}
-
-const fetchAllReviews = async () => {
-  return await reviewsRef.orderBy('createdAt', 'desc').get()
-}
 
 const filterValidReviews = (reviewData, requestNames, hypercertID) => {
   if (requestNames.includes(reviewData.requestName)) {
@@ -26,15 +15,8 @@ const filterValidReviews = (reviewData, requestNames, hypercertID) => {
 
 const searchReviewsByHypercertID = async hypercertID => {
   try {
-    console.log(hypercertID)
-    const grantQuery = await fetchGrantByHypercertID(hypercertID)
-    if (grantQuery.empty) return []
-
-    const grantData = grantQuery.docs[0].data()
-    const requestNames = grantData.request_names || []
-    if (requestNames.length === 0) return []
-
-    const reviewsQuery = await fetchAllReviews()
+    const requestNames = await findReviewRequestsByHypercertID(hypercertID)
+    const reviewsQuery = await reviewsRef.get()
     const reviewDocs = reviewsQuery.docs
 
     const matchedReviewsPromises = reviewDocs.map(async doc => {
@@ -66,7 +48,7 @@ const searchReviewsByHypercertID = async hypercertID => {
     })
 
     const allMatchedReviews = await Promise.all(matchedReviewsPromises)
-    return allMatchedReviews.flat()
+    return allMatchedReviews.flat().sort((a, b) => b.createdAt - a.createdAt)
   } catch (error) {
     console.error('Error fetching reviews:', error)
     return []
