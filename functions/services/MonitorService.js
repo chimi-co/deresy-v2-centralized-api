@@ -21,7 +21,7 @@ const {
   updateHypercert,
 } = require('./DeresyDBService')
 
-const { saveHypercert } = require('./HypercertsService')
+const { saveHypercert, saveNewHypercertToDB } = require('./HypercertsService')
 
 const { MINTED_BLOCK_COLLECTION } = require('../constants/collections')
 const { DERESY_CONTRACT_ABI } = require('../constants/contractConstants')
@@ -85,7 +85,9 @@ const writeFormToDB = async (formName, tx, reviewForm) => {
 const fetchRequestHypercerts = async hypercertIDs => {
   for (const hypercertID of hypercertIDs) {
     const hypercert = await getHypercert(hypercertID)
-    if (hypercert.processed === 2) {
+    if (!hypercert) {
+      await saveNewHypercertToDB(hypercertID)
+    } else if (hypercert.processed === 2) {
       const hypercertUri = hypercert.uri.startsWith('ipfs://')
         ? hypercert.uri.replace('ipfs://', '')
         : hypercert.uri

@@ -1,5 +1,8 @@
 const { db } = require('../firebase')
 
+const axios = require('axios')
+const { Client, cacheExchange, fetchExchange } = require('@urql/core')
+
 const { HYPERCERTS_COLLECTION } = require('../constants/collections')
 const { getSixMonthsAgoTimestamp } = require('../utils')
 const hypercertsRef = db.collection(HYPERCERTS_COLLECTION)
@@ -83,9 +86,59 @@ const getLatestHypercerts = async () => {
   }
 }
 
+const saveNewHypercertToDB = async hypercertID => {
+  try {
+    const client = new Client({
+      url: 'https://api.thegraph.com/subgraphs/name/hypercerts-admin/hypercerts-optimism-mainnet',
+      exchanges: [cacheExchange, fetchExchange],
+    })
+
+    let claimQuery = `
+      query claims($hypercertID: String!) {
+        claims(where: {tokenID: $hypercertID}) {
+          id
+          uri
+          creation
+          tokenID
+        }
+      }
+    `
+
+    let queryVariables = {
+      hypercertID: hypercertID,
+    }
+
+    let claimFromQuery = await client.query(claimQuery, queryVariables)
+
+    const dataHypercertQuery = claimFromQuery.data.claims[0]
+
+    const hypercertUri = dataHypercertQuery.uri.startsWith('ipfs://')
+      ? dataHypercertQuery.uri.replace('ipfs://', '')
+      : dataHypercertQuery.uri
+
+    const hypercertMetadataResponse = await axios.get(
+      `https://ipfs.io/ipfs/${hypercertUri}`,
+    )
+    const hypercertMetadata = hypercertMetadataResponse.data
+
+    const hypercertToSave = {
+      ...dataHypercertQuery,
+      metadata: hypercertMetadata,
+      processed: 3,
+      name: hypercertMetadata.name,
+    }
+
+    await saveHypercert(hypercertToSave)
+  } catch (e) {
+    console.error('[ERROR] Error creating the new Hypercert')
+    console.error(e)
+  }
+}
+
 module.exports = {
   searchHypercerts,
   saveHypercert,
   getHypercertsCounts,
   getLatestHypercerts,
+  saveNewHypercertToDB,
 }
