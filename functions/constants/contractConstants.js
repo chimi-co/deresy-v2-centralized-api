@@ -639,6 +639,19 @@ module.exports = {
     },
     {
       inputs: [],
+      name: 'hypercertContract',
+      outputs: [
+        {
+          internalType: 'contract IHypercertable',
+          name: '',
+          type: 'address',
+        },
+      ],
+      stateMutability: 'view',
+      type: 'function',
+    },
+    {
+      inputs: [],
       name: 'isPayable',
       outputs: [
         {
@@ -974,12 +987,38 @@ module.exports = {
     {
       inputs: [
         {
+          internalType: 'address',
+          name: '_hypercertContractAddress',
+          type: 'address',
+        },
+      ],
+      name: 'setHypercertContract',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function',
+    },
+    {
+      inputs: [
+        {
           internalType: 'bytes32',
           name: '_reviewsSchemaID',
           type: 'bytes32',
         },
       ],
       name: 'setReviewsSchemaID',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function',
+    },
+    {
+      inputs: [
+        {
+          internalType: 'bool',
+          name: '_validateHypercertIDs',
+          type: 'bool',
+        },
+      ],
+      name: 'setValidateHypercertIDs',
       outputs: [],
       stateMutability: 'nonpayable',
       type: 'function',
@@ -1015,6 +1054,19 @@ module.exports = {
       name: 'unwhitelistToken',
       outputs: [],
       stateMutability: 'nonpayable',
+      type: 'function',
+    },
+    {
+      inputs: [],
+      name: 'validateHypercertIDs',
+      outputs: [
+        {
+          internalType: 'bool',
+          name: '',
+          type: 'bool',
+        },
+      ],
+      stateMutability: 'view',
       type: 'function',
     },
     {
