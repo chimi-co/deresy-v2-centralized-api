@@ -28,6 +28,11 @@ module.exports = {
     },
     {
       inputs: [],
+      name: 'InvalidLength',
+      type: 'error',
+    },
+    {
+      inputs: [],
       name: 'NotPayable',
       type: 'error',
     },
