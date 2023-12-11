@@ -3,6 +3,6 @@
     "default": " deresy-dev ",
     "development": "deresy-dev",
     "staging": "deresy-staging",
-    "production": "deresy-prod"
+    "production": "deresy-prod-v2"
   }
 }

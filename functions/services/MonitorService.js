@@ -92,7 +92,15 @@ const fetchRequestHypercerts = async hypercertIDs => {
         ? hypercert.uri.replace('ipfs://', '')
         : hypercert.uri
       const hypercertMetadataResponse = await axios.get(
-        `https://ipfs.io/ipfs/${hypercertUri}`,
+        `${
+          functions.config().settings.pinataDeresyGateway
+        }/ipfs/${hypercertUri}`,
+        {
+          headers: {
+            'x-pinata-gateway-token':
+              functions.config().settings.pinataDeresyGatewayToken,
+          },
+        },
       )
       if (
         hypercertMetadataResponse &&
@@ -202,7 +210,15 @@ const writeHypercertToDB = async hypercert => {
     : hypercert.uri
 
   try {
-    const response = await axios.get(`https://ipfs.io/ipfs/${claimUri}`)
+    const response = await axios.get(
+      `${functions.config().settings.pinataDeresyGateway}/ipfs/${claimUri}`,
+      {
+        headers: {
+          'x-pinata-gateway-token':
+            functions.config().settings.pinataDeresyGatewayToken,
+        },
+      },
+    )
     hypercertMetadata = response.data
     const name = hypercertMetadata.name || 'Name Unavailable'
     const data = {
