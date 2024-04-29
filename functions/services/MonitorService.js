@@ -139,7 +139,7 @@ const writeReviewsToDB = async (requestName, reviews) => {
   const reviewsArray = []
 
   const schemaEncoder = new SchemaEncoder(
-    'string requestName, uint256 hypercertID, string[] answers, string pdfIpfsHash, string[] attachmentsIpfsHashes',
+    'string requestName, uint256 hypercertID, string[] answers, string[] questions, string[] questionTypes, string pdfIpfsHash, string[] attachmentsIpfsHashes',
   )
   const eas = new EAS(EAS_CONTRACT_ADDRESS)
   eas.connect(provider)
@@ -205,31 +205,40 @@ const writeAmendmentsToDB = async amendmentUID => {
 
 const writeHypercertToDB = async hypercert => {
   let hypercertMetadata = {}
-  const claimUri = hypercert.uri.startsWith('ipfs://')
-    ? hypercert.uri.replace('ipfs://', '')
-    : hypercert.uri
+  if (hypercert.uri) {
+    const claimUri = hypercert.uri.startsWith('ipfs://')
+      ? hypercert.uri.replace('ipfs://', '')
+      : hypercert.uri
 
-  try {
-    const response = await axios.get(
-      `${functions.config().settings.pinataDeresyGateway}/ipfs/${claimUri}`,
-      {
-        headers: {
-          'x-pinata-gateway-token':
-            functions.config().settings.pinataDeresyGatewayToken,
+    try {
+      const response = await axios.get(
+        `${functions.config().settings.pinataDeresyGateway}/ipfs/${claimUri}`,
+        {
+          headers: {
+            'x-pinata-gateway-token':
+              functions.config().settings.pinataDeresyGatewayToken,
+          },
         },
-      },
-    )
-    hypercertMetadata = response.data
-    const name = hypercertMetadata.name || 'Name Unavailable'
+      )
+      hypercertMetadata = response.data
+      const name = hypercertMetadata.name || 'Name Unavailable'
+      const data = {
+        ...hypercert,
+        name,
+        processed: 2,
+      }
+      await saveHypercert(data)
+    } catch (error) {
+      console.error(`Error fetching/updating hypercert ${claimUri}:`)
+    }
+  } else {
+    const name = 'NULL_URI_HYPERCERT'
     const data = {
       ...hypercert,
       name,
       processed: 2,
     }
-
     await saveHypercert(data)
-  } catch (error) {
-    console.error(`Error fetching/updating hypercert ${claimUri}:`)
   }
 }
 
