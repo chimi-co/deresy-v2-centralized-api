@@ -1,6 +1,10 @@
 const functions = require('firebase-functions')
 const express = require('express')
-const cors = require('cors')({ origin: true })
+const cors = require('cors')({
+  origin: true,
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+})
 const { https, logger } = functions
 const { Readable } = require('stream')
 

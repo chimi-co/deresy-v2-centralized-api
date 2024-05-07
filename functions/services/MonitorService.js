@@ -31,7 +31,7 @@ const mintedBlockRef = db.collection(MINTED_BLOCK_COLLECTION)
 const CONTRACT_ADDRESS = functions.config().settings.contract_address
 const EAS_CONTRACT_ADDRESS = functions.config().settings.eas_contract_address
 
-const BLOCK_LIMIT = 100000
+const BLOCK_LIMIT = 10000000
 
 const getGrantScore = reviewsByGrant => {
   const scores = []
@@ -153,12 +153,11 @@ const writeReviewsToDB = async (requestName, reviews) => {
     }
 
     const attestation = await eas.getAttestation(attestationID)
-
-    const createdAt = attestation.time.toNumber()
+    const createdAt = Number(attestation.time)
     const decodedData = schemaEncoder.decodeData(attestation.data)
     const answers = decodedData[2].value.value
-    const pdfIpfsHash = decodedData[3].value.value
-    const attachmentsIpfsHashes = decodedData[4].value.value
+    const pdfIpfsHash = decodedData[5].value.value
+    const attachmentsIpfsHashes = decodedData[6].value.value
 
     reviewsArray.push({
       ...data,
@@ -187,7 +186,7 @@ const writeAmendmentsToDB = async amendmentUID => {
 
   const amendmentAttestation = await eas.getAttestation(amendmentUID)
   const decodedData = schemaEncoder.decodeData(amendmentAttestation.data)
-  const createdAt = amendmentAttestation.time.toNumber()
+  const createdAt = Number(amendmentAttestation.time)
 
   const data = {
     amendmentUID: amendmentUID,
@@ -403,7 +402,6 @@ const processReviews = async startReviewBlock => {
       )
       pastReviewEvents.forEach(ev => pastEvents.push(ev))
     }
-
     const updatedBlockNumber =
       endBlock == 'latest' ? latestBlockNumber : endBlock
     await mintedBlockRef
@@ -420,7 +418,6 @@ const processReviews = async startReviewBlock => {
       const reviewRequest = await smartContract.methods
         .getRequest(requestName)
         .call()
-
       await writeReviewsToDB(requestName, reviewRequest.reviews, tx)
 
       await mintedBlockRef
