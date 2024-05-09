@@ -23,11 +23,15 @@ const {
 
 const { saveHypercert, saveNewHypercertToDB } = require('./HypercertsService')
 
-const { MINTED_BLOCK_COLLECTION } = require('../constants/collections')
+const {
+  MINTED_BLOCK_COLLECTION,
+  HYPERCERTS_COLLECTION,
+} = require('../constants/collections')
 const { DERESY_CONTRACT_ABI } = require('../constants/contractConstants')
 const { EAS, SchemaEncoder } = require('@ethereum-attestation-service/eas-sdk')
 
 const mintedBlockRef = db.collection(MINTED_BLOCK_COLLECTION)
+const hypercertBlockRef = db.collection(HYPERCERTS_COLLECTION)
 const CONTRACT_ADDRESS = functions.config().settings.contract_address
 const EAS_CONTRACT_ADDRESS = functions.config().settings.eas_contract_address
 
@@ -78,8 +82,51 @@ const writeFormToDB = async (formName, tx, reviewForm) => {
     types: reviewForm.questionTypes,
     choices: choicesObj,
     tx: tx,
+    systemVersion: parseInt(functions.config().settings.systemVersion),
   }
   await saveForm(formName, data)
+}
+
+const fetchFailedHypercerts = async () => {
+  try {
+    const hypercerts = await hypercertBlockRef.where('processed', '==', 4).get()
+    console.log(`Found ${hypercerts.docs.length} failed hypercerts`)
+    for (const hypercertDoc of hypercerts.docs) {
+      const hypercert = hypercertDoc.data()
+      const hypercertUri = hypercert.uri.startsWith('ipfs://')
+        ? hypercert.uri.replace('ipfs://', '')
+        : hypercert.uri
+      try {
+        const hypercertMetadataResponse = await axios.get(
+          `${
+            functions.config().settings.pinataDeresyGateway
+          }/ipfs/${hypercertUri}`,
+          {
+            headers: {
+              'x-pinata-gateway-token':
+                functions.config().settings.pinataDeresyGatewayToken,
+            },
+          },
+        )
+        if (
+          hypercertMetadataResponse &&
+          hypercertMetadataResponse.data !== null &&
+          hypercertMetadataResponse.data !== undefined
+        ) {
+          const hypercertMetadata = hypercertMetadataResponse.data
+          await updateHypercert(hypercertDoc.id, {
+            ...hypercert,
+            metadata: hypercertMetadata,
+            processed: 3,
+          })
+        }
+      } catch (error) {
+        console.log('Error trying to fetch failed hypercert metadata', error)
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching failed hypercerts:', error)
+  }
 }
 
 const fetchRequestHypercerts = async hypercertIDs => {
@@ -91,28 +138,37 @@ const fetchRequestHypercerts = async hypercertIDs => {
       const hypercertUri = hypercert.uri.startsWith('ipfs://')
         ? hypercert.uri.replace('ipfs://', '')
         : hypercert.uri
-      const hypercertMetadataResponse = await axios.get(
-        `${
-          functions.config().settings.pinataDeresyGateway
-        }/ipfs/${hypercertUri}`,
-        {
-          headers: {
-            'x-pinata-gateway-token':
-              functions.config().settings.pinataDeresyGatewayToken,
+      try {
+        const hypercertMetadataResponse = await axios.get(
+          `${
+            functions.config().settings.pinataDeresyGateway
+          }/ipfs/${hypercertUri}`,
+          {
+            headers: {
+              'x-pinata-gateway-token':
+                functions.config().settings.pinataDeresyGatewayToken,
+            },
           },
-        },
-      )
-      if (
-        hypercertMetadataResponse &&
-        hypercertMetadataResponse.data !== null &&
-        hypercertMetadataResponse.data !== undefined
-      ) {
-        const hypercertMetadata = hypercertMetadataResponse.data
-        await updateHypercert(hypercertID, {
-          ...hypercert,
-          metadata: hypercertMetadata,
-          processed: 3,
-        })
+        )
+        if (
+          hypercertMetadataResponse &&
+          hypercertMetadataResponse.data !== null &&
+          hypercertMetadataResponse.data !== undefined
+        ) {
+          const hypercertMetadata = hypercertMetadataResponse.data
+          await updateHypercert(hypercertID, {
+            ...hypercert,
+            metadata: hypercertMetadata,
+            processed: 3,
+          })
+        } else {
+          await updateHypercert(hypercertID, {
+            ...hypercert,
+            processed: 4,
+          })
+        }
+      } catch (e) {
+        console.log('Error trying to fetch hypercert metadata', e)
       }
     }
   }
@@ -130,6 +186,7 @@ const writeRequestToDB = async (requestName, reviewRequest, tx) => {
     paymentTokenAddress: reviewRequest.paymentTokenAddress,
     targetsIPFSHashes: reviewRequest.hypercertIPFSHashes,
     tx: tx,
+    systemVersion: parseInt(functions.config().settings.systemVersion),
   }
 
   await saveRequest(requestName, data)
@@ -171,6 +228,7 @@ const writeReviewsToDB = async (requestName, reviews) => {
   const data = {
     requestName: requestName,
     reviews: reviewsArray,
+    systemVersion: parseInt(functions.config().settings.systemVersion),
   }
 
   await saveReviews(requestName, data)
@@ -197,6 +255,7 @@ const writeAmendmentsToDB = async amendmentUID => {
     pdfIpfsHash: decodedData[3].value.value,
     attachmentsIpfsHashes: decodedData[4].value.value,
     createdAt: createdAt,
+    systemVersion: parseInt(functions.config().settings.systemVersion),
   }
 
   await saveAmendment(data)
@@ -706,6 +765,7 @@ const monitorHypercerts = functions
       ) {
         await mintedBlockRef.doc(doc.id).update({ hypercertsInProgress: true })
         await processHypercerts(lastHypercertCreation)
+        await fetchFailedHypercerts()
         await mintedBlockRef.doc(doc.id).update({ hypercertsInProgress: false })
         await mintedBlockRef.doc(doc.id).update({ lastSuccessTime: new Date() })
       }

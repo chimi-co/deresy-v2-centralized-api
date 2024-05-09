@@ -8,6 +8,7 @@ const {
   AMENDMENTS_COLLECTION,
   HYPERCERTS_COLLECTION,
 } = require('../constants/collections')
+const { functions } = require('lodash')
 const formsRef = db.collection(FORMS_COLLECTION)
 const reviewRequestsRef = db.collection(REVIEW_REQUESTS_COLLECTION)
 const reviewsRef = db.collection(REVIEWS_COLLECTION)
@@ -103,6 +104,11 @@ const getGrantByTarget = async requestTarget => {
 const getReviewRequest = async requestName => {
   const snapshot = await reviewRequestsRef
     .where('requestName', '==', requestName)
+    .where(
+      'systemVersion',
+      '==',
+      parseInt(functions.config().settings.systemVersion),
+    )
     .limit(1)
     .get()
   return snapshot.docs[0].data()
@@ -111,6 +117,11 @@ const getReviewRequest = async requestName => {
 const getReviews = async requestName => {
   const snapshot = await reviewsRef
     .where('requestName', '==', requestName)
+    .where(
+      'systemVersion',
+      '==',
+      parseInt(functions.config().settings.systemVersion),
+    )
     .limit(1)
     .get()
   return snapshot.docs[0].data()
