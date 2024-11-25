@@ -492,39 +492,51 @@ const processHypercerts = async lastHypercertCreation => {
   const lastBlockDoc = snapshot.docs[0]
 
   const client = new Client({
-    url: 'https://api.thegraph.com/subgraphs/name/hypercerts-admin/hypercerts-optimism-mainnet',
+    url: 'https://api.hypercerts.org/v1/graphql',
     exchanges: [cacheExchange, fetchExchange],
   })
 
-  let claimQuery = `
-    query claims($lastHypercertCreation: String) {
-      claims(
+  let hypercertsQuery = `
+    query searchHypercert($hypercertName: String) {
+      hypercerts(
         first: 1
-        orderBy: creation
-        orderDirection: asc
-        where: { creation_gt: $lastHypercertCreation }
+        where: { creation_block_timestamp: { gt: $lastHypercertCreation } } }
+        sort: {by: {creation_block_timestamp: ascending}}
       ) {
-        id
-        creation
-        tokenID
-        uri
+        count
+        data {
+          id
+          creation_block_timestamp
+          token_id
+          metadata {
+            uri
+            name
+          }
+        }
       }
     }
   `
-  let claimFromQuery = await client.query(claimQuery, {
+  let hypercertFromQuery = await client.query(hypercertsQuery, {
     lastHypercertCreation: lastHypercertCreation.toString(),
   })
 
   if (
-    claimFromQuery &&
-    claimFromQuery.data &&
-    claimFromQuery.data.claims &&
-    claimFromQuery.data.claims.length > 0
+    hypercertFromQuery &&
+    hypercertFromQuery.data &&
+    hypercertFromQuery.data.hypercerts &&
+    hypercertFromQuery.data.hypercerts.data.length > 0
   ) {
-    await writeHypercertToDB(claimFromQuery.data.claims[0])
+    const claims = hypercertFromQuery.data.hypercerts.data.map(cert => ({
+      id: cert.id,
+      creation: cert.creation_block_timestamp,
+      uri: cert.metadata.uri,
+      tokenID: cert.token_id,
+      name: cert.metadata.name
+    }))
+    await writeHypercertToDB(claims[0])
     await mintedBlockRef
       .doc(lastBlockDoc.id)
-      .update({ lastHypercertCreation: claimFromQuery.data.claims[0].creation })
+      .update({ lastHypercertCreation: hypercertFromQuery.data.claims[0].creation })
   }
 }
 
