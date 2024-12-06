@@ -1,12 +1,9 @@
 const functions = require('firebase-functions')
 const { groupBy } = require('lodash')
-const axios = require('axios')
 
 const { db } = require('../firebase')
 const web3 = require('../web3')
 const provider = require('../ethers')
-
-const { Client, cacheExchange, fetchExchange } = require('@urql/core')
 
 const {
   getGrantByTarget,
@@ -17,11 +14,7 @@ const {
   saveReviews,
   saveAmendment,
   updateGrant,
-  getHypercert,
-  updateHypercert,
 } = require('./DeresyDBService')
-
-const { saveHypercert, saveNewHypercertToDB } = require('./HypercertsService')
 
 const { MINTED_BLOCK_COLLECTION } = require('../constants/collections')
 const { DERESY_CONTRACT_ABI } = require('../constants/contractConstants')
@@ -80,42 +73,6 @@ const writeFormToDB = async (formName, tx, reviewForm) => {
     tx: tx,
   }
   await saveForm(formName, data)
-}
-
-const fetchRequestHypercerts = async hypercertIDs => {
-  for (const hypercertID of hypercertIDs) {
-    const hypercert = await getHypercert(hypercertID)
-    if (!hypercert) {
-      await saveNewHypercertToDB(hypercertID)
-    } else if (hypercert.processed === 2) {
-      const hypercertUri = hypercert.uri.startsWith('ipfs://')
-        ? hypercert.uri.replace('ipfs://', '')
-        : hypercert.uri
-      const hypercertMetadataResponse = await axios.get(
-        `${
-          functions.config().settings.pinataDeresyGateway
-        }/ipfs/${hypercertUri}`,
-        {
-          headers: {
-            'x-pinata-gateway-token':
-              functions.config().settings.pinataDeresyGatewayToken,
-          },
-        },
-      )
-      if (
-        hypercertMetadataResponse &&
-        hypercertMetadataResponse.data !== null &&
-        hypercertMetadataResponse.data !== undefined
-      ) {
-        const hypercertMetadata = hypercertMetadataResponse.data
-        await updateHypercert(hypercertID, {
-          ...hypercert,
-          metadata: hypercertMetadata,
-          processed: 3,
-        })
-      }
-    }
-  }
 }
 
 const writeRequestToDB = async (requestName, reviewRequest, tx) => {
@@ -201,36 +158,6 @@ const writeAmendmentsToDB = async amendmentUID => {
   }
 
   await saveAmendment(data)
-}
-
-const writeHypercertToDB = async hypercert => {
-  let hypercertMetadata = {}
-  const claimUri = hypercert.uri.startsWith('ipfs://')
-    ? hypercert.uri.replace('ipfs://', '')
-    : hypercert.uri
-
-  try {
-    const response = await axios.get(
-      `${functions.config().settings.pinataDeresyGateway}/ipfs/${claimUri}`,
-      {
-        headers: {
-          'x-pinata-gateway-token':
-            functions.config().settings.pinataDeresyGatewayToken,
-        },
-      },
-    )
-    hypercertMetadata = response.data
-    const name = hypercertMetadata.name || 'Name Unavailable'
-    const data = {
-      ...hypercert,
-      name,
-      processed: 2,
-    }
-
-    await saveHypercert(data)
-  } catch (error) {
-    console.error(`Error fetching/updating hypercert ${claimUri}:`)
-  }
 }
 
 const processForms = async startFormBlock => {
@@ -483,63 +410,6 @@ const processAmendments = async startAmendmentBlock => {
   }
 }
 
-const processHypercerts = async lastHypercertCreation => {
-  const snapshot = await mintedBlockRef
-    .where('monitorType', '==', 'hypercerts')
-    .limit(1)
-    .get()
-
-  const lastBlockDoc = snapshot.docs[0]
-
-  const client = new Client({
-    url: 'https://api.hypercerts.org/v1/graphql',
-    exchanges: [cacheExchange, fetchExchange],
-  })
-
-  let hypercertsQuery = `
-    query searchHypercert($hypercertName: String) {
-      hypercerts(
-        first: 1
-        where: { creation_block_timestamp: { gt: $lastHypercertCreation } } }
-        sort: {by: {creation_block_timestamp: ascending}}
-      ) {
-        count
-        data {
-          id
-          creation_block_timestamp
-          token_id
-          metadata {
-            uri
-            name
-          }
-        }
-      }
-    }
-  `
-  let hypercertFromQuery = await client.query(hypercertsQuery, {
-    lastHypercertCreation: lastHypercertCreation.toString(),
-  })
-
-  if (
-    hypercertFromQuery &&
-    hypercertFromQuery.data &&
-    hypercertFromQuery.data.hypercerts &&
-    hypercertFromQuery.data.hypercerts.data.length > 0
-  ) {
-    const claims = hypercertFromQuery.data.hypercerts.data.map(cert => ({
-      id: cert.id,
-      creation: cert.creation_block_timestamp,
-      uri: cert.metadata.uri,
-      tokenID: cert.token_id,
-      name: cert.metadata.name
-    }))
-    await writeHypercertToDB(claims[0])
-    await mintedBlockRef
-      .doc(lastBlockDoc.id)
-      .update({ lastHypercertCreation: hypercertFromQuery.data.claims[0].creation })
-  }
-}
-
 const monitorForms = functions
   .runWith({
     timeoutSeconds: 540,
@@ -686,45 +556,9 @@ const monitorAmendments = functions
     }
   })
 
-const monitorHypercerts = functions
-  .runWith({
-    timeoutSeconds: 540,
-    memory: '8GB',
-  })
-  .pubsub.schedule('every 1 minutes')
-  .onRun(async () => {
-    try {
-      let lastHypercertCreation
-      const snapshot = await mintedBlockRef
-        .where('monitorType', '==', 'hypercerts')
-        .limit(1)
-        .get()
-      const doc = snapshot.docs[0]
-      if (!doc.exists) {
-        lastHypercertCreation = 0
-      } else {
-        lastHypercertCreation = doc.data().lastHypercertCreation
-      }
-
-      if (
-        !doc.data().hypercertsInProgress || // check if an update is already in progress
-        new Date() - doc.data().lastSuccessTime.toDate() > 540000 // go ahead and run if it's been 9 minutes since last successful run
-      ) {
-        await mintedBlockRef.doc(doc.id).update({ hypercertsInProgress: true })
-        await processHypercerts(lastHypercertCreation)
-        await mintedBlockRef.doc(doc.id).update({ hypercertsInProgress: false })
-        await mintedBlockRef.doc(doc.id).update({ lastSuccessTime: new Date() })
-      }
-    } catch (error) {
-      functions.logger.error('[ !!! ] Error: ', error)
-      throw new functions.https.HttpsError(error.code, error.message)
-    }
-  })
-
 module.exports = {
   monitorForms,
   monitorRequests,
   monitorReviews,
-  monitorAmendments,
-  monitorHypercerts,
+  monitorAmendments
 }

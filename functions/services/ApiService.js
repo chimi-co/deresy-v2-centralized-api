@@ -6,9 +6,9 @@ const { Readable } = require('stream')
 
 const { uploadPdf, uploadFileToIpfs } = require('./PinataService')
 const {
-  searchHypercerts,
   getHypercertsCounts,
   getLatestHypercerts,
+  saveHypercert,
 } = require('./HypercertsService')
 const { searchReviewsByHypercertID } = require('./ReviewsService')
 
@@ -64,15 +64,12 @@ app.get('/get_latest_hypercerts', (request, response) => {
   })
 })
 
-app.get('/search_hypercerts', (request, response) => {
+app.get('/save_hypercert', (request, response) => {
   return cors(request, response, async () => {
     try {
-      const { searchInput, lastSixMonths } = request.query
-      const hypercertResults = await searchHypercerts(
-        searchInput,
-        lastSixMonths,
-      )
-      response.send(hypercertResults)
+      const hypercert = request.body
+      await saveHypercert(hypercert)
+      response.status(201).send({message: 'hypercert saved successfully'})
     } catch (error) {
       logger.error('[ !!! ] Error: ', error)
       throw new https.HttpsError(error.code, error.message)
