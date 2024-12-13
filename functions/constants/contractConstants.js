@@ -327,6 +327,11 @@ module.exports = {
           type: 'address[]',
         },
         {
+          internalType: 'address[]',
+          name: 'reviewerContracts',
+          type: 'address[]',
+        },
+        {
           internalType: 'uint256[]',
           name: 'hypercertIDs',
           type: 'uint256[]',
@@ -365,6 +370,11 @@ module.exports = {
           type: 'address[]',
         },
         {
+          internalType: 'address[]',
+          name: 'reviewerContracts',
+          type: 'address[]',
+        },
+        {
           internalType: 'uint256[]',
           name: 'hypercertIDs',
           type: 'uint256[]',
@@ -383,6 +393,11 @@ module.exports = {
           internalType: 'uint256',
           name: 'rewardPerReview',
           type: 'uint256',
+        },
+        {
+          internalType: 'uint8',
+          name: 'reviewsPerHypercert',
+          type: 'uint8',
         },
         {
           internalType: 'address',
@@ -451,6 +466,11 @@ module.exports = {
               type: 'address[]',
             },
             {
+              internalType: 'address[]',
+              name: 'reviewerContracts',
+              type: 'address[]',
+            },
+            {
               internalType: 'uint256[]',
               name: 'hypercertIDs',
               type: 'uint256[]',
@@ -469,6 +489,11 @@ module.exports = {
               internalType: 'uint256',
               name: 'rewardPerReview',
               type: 'uint256',
+            },
+            {
+              internalType: 'uint8',
+              name: 'reviewsPerHypercert',
+              type: 'uint8',
             },
             {
               components: [
@@ -666,6 +691,30 @@ module.exports = {
         },
       ],
       stateMutability: 'pure',
+      type: 'function',
+    },
+    {
+      inputs: [
+        {
+          internalType: 'address',
+          name: 'reviewerAddress',
+          type: 'address',
+        },
+        {
+          internalType: 'string',
+          name: '_name',
+          type: 'string',
+        },
+      ],
+      name: 'isReviewer',
+      outputs: [
+        {
+          internalType: 'bool',
+          name: '',
+          type: 'bool',
+        },
+      ],
+      stateMutability: 'view',
       type: 'function',
     },
     {

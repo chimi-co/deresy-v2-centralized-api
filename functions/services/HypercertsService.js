@@ -1,4 +1,5 @@
 const { db } = require('../firebase')
+const functions = require('firebase-functions')
 
 const axios = require('axios')
 const { Client, cacheExchange, fetchExchange } = require('@urql/core')
@@ -111,24 +112,54 @@ const saveNewHypercertToDB = async hypercertID => {
     let claimFromQuery = await client.query(claimQuery, queryVariables)
 
     const dataHypercertQuery = claimFromQuery.data.claims[0]
+    if (dataHypercertQuery.uri) {
+      const hypercertUri = dataHypercertQuery.uri.startsWith('ipfs://')
+        ? dataHypercertQuery.uri.replace('ipfs://', '')
+        : dataHypercertQuery.uri
 
-    const hypercertUri = dataHypercertQuery.uri.startsWith('ipfs://')
-      ? dataHypercertQuery.uri.replace('ipfs://', '')
-      : dataHypercertQuery.uri
+      const hypercertMetadataResponse = await axios.get(
+        `${
+          functions.config().settings.pinataDeresyGateway
+        }/ipfs/${hypercertUri}`,
+        {
+          headers: {
+            'x-pinata-gateway-token':
+              functions.config().settings.pinataDeresyGatewayToken,
+          },
+        },
+      )
 
-    const hypercertMetadataResponse = await axios.get(
-      `https://ipfs.io/ipfs/${hypercertUri}`,
-    )
-    const hypercertMetadata = hypercertMetadataResponse.data
+      if (
+        hypercertMetadataResponse &&
+        hypercertMetadataResponse.data !== null &&
+        hypercertMetadataResponse.data !== undefined
+      ) {
+        const hypercertMetadata = hypercertMetadataResponse.data
 
-    const hypercertToSave = {
-      ...dataHypercertQuery,
-      metadata: hypercertMetadata,
-      processed: 3,
-      name: hypercertMetadata.name,
+        const hypercertToSave = {
+          ...dataHypercertQuery,
+          metadata: hypercertMetadata,
+          processed: 3,
+          name: hypercertMetadata.name || 'Name Unavailable',
+        }
+
+        await saveHypercert(hypercertToSave)
+      } else {
+        const data = {
+          ...dataHypercertQuery,
+          name: 'Name Unavailable',
+          processed: 3,
+        }
+        await saveHypercert(data)
+      }
+    } else {
+      const data = {
+        ...dataHypercertQuery,
+        name: 'NULL_URI_HYPERCERT',
+        processed: 3,
+      }
+      await saveHypercert(data)
     }
-
-    await saveHypercert(hypercertToSave)
   } catch (e) {
     console.error('[ERROR] Error creating the new Hypercert')
     console.error(e)
