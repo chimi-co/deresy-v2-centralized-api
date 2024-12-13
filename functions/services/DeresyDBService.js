@@ -154,6 +154,8 @@ const getHypercert = async tokenID => {
 }
 
 const updateHypercert = async (tokenID, payload) => {
+  console.log(`Updating hypercert ${tokenID}`)
+  console.log(`Processed status: ${payload.processed}`)
   const snapshot = await hypercertsRef
     .where('tokenID', '==', tokenID)
     .limit(1)

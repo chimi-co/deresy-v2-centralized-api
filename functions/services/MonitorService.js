@@ -93,9 +93,15 @@ const fetchFailedHypercerts = async () => {
     console.log(`Found ${hypercerts.docs.length} failed hypercerts`)
     for (const hypercertDoc of hypercerts.docs) {
       const hypercert = hypercertDoc.data()
+      console.log(`Processing failed hypercert ${hypercertDoc.id}`)
+      await updateHypercert(hypercertDoc.id, {
+        ...hypercert,
+        processed: 5,
+      })
       const hypercertUri = hypercert.uri.startsWith('ipfs://')
         ? hypercert.uri.replace('ipfs://', '')
         : hypercert.uri
+      console.log(`Hypercert URI: ${hypercertUri}`)
       try {
         const hypercertMetadataResponse = await axios.get(
           `${
@@ -114,6 +120,7 @@ const fetchFailedHypercerts = async () => {
           hypercertMetadataResponse.data !== undefined
         ) {
           const hypercertMetadata = hypercertMetadataResponse.data
+          console.log(`HypercertMetadata: ${hypercertMetadata}`)
           await updateHypercert(hypercertDoc.id, {
             ...hypercert,
             metadata: hypercertMetadata,
@@ -121,6 +128,10 @@ const fetchFailedHypercerts = async () => {
           })
         }
       } catch (error) {
+        await updateHypercert(hypercertDoc.id, {
+          ...hypercert,
+          processed: 4,
+        })
         console.log('Error trying to fetch failed hypercert metadata', error)
       }
     }
